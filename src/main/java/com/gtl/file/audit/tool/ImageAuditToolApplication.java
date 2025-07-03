@@ -1,4 +1,4 @@
-package com.gtl.FileAuditTool;
+package com.gtl.file.audit.tool;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

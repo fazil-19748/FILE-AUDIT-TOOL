@@ -1,4 +1,4 @@
-package com.gtl.FileAuditTool;
+package com.gtl.file.audit.tool;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

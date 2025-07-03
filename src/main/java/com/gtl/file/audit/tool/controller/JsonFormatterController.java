@@ -10,12 +10,12 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 
 @RestController
-@RequestMapping("/json")
+@RequestMapping("/api/json")
 public class JsonFormatterController {
 
     private final ObjectMapper objectMapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
 
-    @PostMapping("/api/format")
+    @PostMapping("/format")
     public ResponseEntity<String> formatJson(@RequestBody String jsonInput) {
         try {
             // Prevent partial parsing — ensures all-or-nothing

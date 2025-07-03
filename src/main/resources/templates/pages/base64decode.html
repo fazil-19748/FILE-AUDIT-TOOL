@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Base64 Decoder</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="fragments/header :: header"></div>
+<h2>Base64 to File Downloader</h2>
+<textarea id="base64Input" rows="20" cols="100" placeholder="Paste your base64 string here"></textarea><br><br>
+<button onclick="downloadFile()">Download File</button>
+
+<script>
+    function downloadFile() {
+        const base64Data = document.getElementById('base64Input').value;
+        const host = window.location.hostname;
+        const port = window.location.port || 8084;
+        const baseUrl = `http://${host}:${port}`;
+
+        fetch(`${baseUrl}/api/files/decode`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'text/plain'
+            },
+            body: base64Data
+        })
+            .then(response => {
+                if (!response.ok) throw new Error("Invalid response");
+                return response.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+
+                // Try to guess filename from content-type
+                const contentType = blob.type;
+                const extension = contentType.split('/')[1] || 'bin';
+                a.download = 'decoded_file.' + extension;
+
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            })
+            .catch(err => alert("Error: " + err.message));
+    }
+</script>
+</body>
+</html>

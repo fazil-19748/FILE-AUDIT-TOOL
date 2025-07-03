@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>JSON Formatter</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f7fa;
+            margin: 0;
+            padding: 40px;
+            text-align: center;
+            color: #2c3e50;
+        }
+
+        h2 {
+            color: #2e86de;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+
+        .editor-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 20px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .editor {
+            flex: 1;
+            min-width: 400px;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        textarea {
+            height: 600px;
+            padding: 12px;
+            background: #ffffff;
+            color: #2c3e50;
+            border-radius: 8px;
+            border: 1px solid #ccd6dd;
+            resize: vertical;
+            font-family: monospace;
+            font-size: 14px;
+            width: 100%;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .output-box {
+            background: #ffffff;
+            border: 1px solid #ccd6dd;
+            border-radius: 8px;
+            padding: 12px;
+            height: 600px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            font-family: monospace;
+            font-size: 14px;
+            text-align: left;
+            display: block;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .json-label {
+            font-size: 16px;
+            color: #34495e;
+            margin-bottom: 5px;
+            text-align: left;
+        }
+
+        .button-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin: 40px 20px 0;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #2e86de;
+            box-shadow: 0 4px 12px rgba(46, 134, 222, 0.3);
+        }
+
+        button#resetBtn {
+            background-color: #95a5a6;
+        }
+
+        button#resetBtn:hover {
+            background-color: #7f8c8d;
+        }
+
+        .json-key {
+            color: #000000;
+        }
+
+        .json-value {
+            color: #006400;;
+        }
+
+        .pretty-json {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            word-break: break-word;
+            margin: 0;
+        }
+
+        .json-string::before,
+        .json-string::after {
+            content: '"';
+        }
+
+
+    </style>
+</head>
+<body>
+<div th:replace="fragments/header :: header"></div>
+
+<h2>JSON Formatter</h2>
+
+<div class="editor-container">
+    <!-- Left editor -->
+    <div class="editor">
+        <label class="json-label">Input JSON</label>
+        <textarea id="jsonInput" placeholder="Paste minified JSON here..."></textarea>
+
+        <!-- Search box for Input -->
+        <input type="text" id="inputSearch" placeholder="Search input..."
+               style="display:none; margin-bottom:10px; padding:6px; border:1px solid #ccc; border-radius:4px; font-size:13px;">
+    </div>
+
+    <!-- Buttons -->
+    <div class="button-panel">
+        <button onclick="beautifyJson()">Format / Beautify</button>
+        <button onclick="resetJson()" id="resetBtn">Reset</button>
+    </div>
+
+    <!-- Right output (highlighted) -->
+    <div class="editor">
+        <label class="json-label">Formatted JSON / Error</label>
+        <div id="jsonOutput" class="output-box"></div>
+        <input type="text" id="outputSearch" placeholder="Search output..."
+               style="display:none; margin-bottom:10px; padding:6px; border:1px solid #ccc; border-radius:4px; font-size:13px;">
+    </div>
+</div>
+
+<script>
+    function beautifyJson() {
+        const input = document.getElementById("jsonInput").value;
+        const host = window.location.hostname;
+        const port = window.location.port || 8084;
+        const baseUrl = `http://${host}:${port}`;
+        const output = document.getElementById("jsonOutput");
+        output.innerText = "Formatting...";
+
+        fetch(`${baseUrl}/api/json/format`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: input
+        })
+            .then(response => response.text())
+            .then(text => {
+                if (text.startsWith("Parse error on line")) {
+                    output.style.color = "#e74c3c";
+                    output.textContent = text; // Show raw error
+                } else {
+                    output.style.color = "#2c3e50";
+                    output.innerHTML = `<pre class="pretty-json">${syntaxHighlight(text)}</pre>`;
+                }
+            })
+            .catch(err => {
+                output.style.color = "#e74c3c";
+                output.textContent = "Request failed: " + err.message;
+            });
+    }
+
+    function syntaxHighlight(json) {
+        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return json.replace(/("(.*?)")(\s*:\s*)?(\d+|true|false|null|".*?")?/g, function (match, key, rawKey, colon, value) {
+            let keySpan = `<span class="json-key">${key}</span>`;
+            if (!colon) return keySpan; // it's just a string in array
+            let valueSpan;
+            if (/^".*?"$/.test(value)) {
+                valueSpan = `<span class="json-value">${value}</span>`;
+            } else if (/true|false|null/.test(value)) {
+                valueSpan = `<span class="json-value">${value}</span>`;
+            } else {
+                valueSpan = `<span class="json-value">${value}</span>`;
+            }
+            return keySpan + colon + valueSpan;
+        });
+    }
+
+    function resetJson() {
+        document.getElementById("jsonInput").value = "";
+        document.getElementById("jsonOutput").innerText = "";
+        document.getElementById("jsonInput").addEventListener("paste", function (e) {
+            const inputArea = this;
+
+            // Give paste time to complete before formatting (use setTimeout)
+            setTimeout(() => {
+                beautifyJson();
+            }, 100); // slight delay ensures pasted content is available
+        });
+    }
+</script>
+
+<script>
+    document.addEventListener("keydown", function (e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === "f") {
+            e.preventDefault();
+
+            document.getElementById("inputSearch").style.display = "block";
+            document.getElementById("outputSearch").style.display = "block";
+            document.getElementById("inputSearch").focus();
+        }
+    });
+
+    // Search input JSON textarea
+    document.getElementById("inputSearch").addEventListener("input", function () {
+        const term = this.value.toLowerCase();
+        const inputArea = document.getElementById("jsonInput");
+        const content = inputArea.value;
+        const index = content.toLowerCase().indexOf(term);
+
+        if (index !== -1) {
+            inputArea.focus();
+            inputArea.setSelectionRange(index, index + term.length);
+        }
+    });
+
+    // Search output JSON display
+    document.getElementById("outputSearch").addEventListener("input", function () {
+        const term = this.value.toLowerCase();
+        const outputDiv = document.getElementById("jsonOutput");
+        const text = outputDiv.textContent || outputDiv.innerText;
+        const index = text.toLowerCase().indexOf(term);
+
+        if (index !== -1) {
+            // Scroll to match
+            const beforeMatch = text.substring(0, index);
+            const linesBefore = beforeMatch.split('\n').length - 1;
+            outputDiv.scrollTop = linesBefore * 18; // roughly one line height
+
+            // Highlighting not added here to keep output clean
+        }
+    });
+</script>
+
+</body>
+</html>

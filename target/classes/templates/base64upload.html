@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>File to Base64 Converter</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<div id="copyNotification" style="
+    display: none;
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #089c48;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    z-index: 1000;
+">
+    Copied to clipboard!
+</div>
+
+
+<body>
+
+<h2>Convert File to Base64</h2>
+
+<div class="form-container">
+    <form id="base64Form">
+        <label for="fileInput">Select File:</label><br>
+        <input type="file" id="fileInput" name="file" required><br><br>
+
+        <button type="submit">Convert to Base64</button>
+        <button type="button" id="resetBtn">Reset</button>
+    </form>
+</div>
+
+<div id="resultSection" style="display: none; margin-top: 20px;">
+    <h3>Base64 Output:</h3>
+    <textarea id="base64Output" rows="10" readonly style="width: 100%;"></textarea>
+    <br>
+    <button id="copyBtn" type="button">Copy to Clipboard</button>
+</div>
+
+<!--<script>-->
+<!--    document.getElementById("base64Form").addEventListener("submit", function (e) {-->
+<!--        e.preventDefault();-->
+
+<!--        const fileInput = document.getElementById("fileInput");-->
+<!--        const file = fileInput.files[0];-->
+<!--        if (!file) return;-->
+
+<!--        const formData = new FormData();-->
+<!--        formData.append("file", file);-->
+
+<!--        fetch(`http://${window.location.hostname}:8084/api/files/to-base64`, {-->
+<!--            method: "POST",-->
+<!--            body: formData-->
+<!--        })-->
+<!--            .then(response => response.text())-->
+<!--            .then(base64 => {-->
+<!--                document.getElementById("base64Output").value = base64;-->
+<!--                document.getElementById("resultSection").style.display = "block";-->
+<!--            })-->
+<!--            .catch(err => {-->
+<!--                alert("Error: " + err.message);-->
+<!--            });-->
+<!--    });-->
+
+<!--    document.getElementById("resetBtn").addEventListener("click", function () {-->
+<!--        document.getElementById("fileInput").value = "";-->
+<!--        document.getElementById("base64Output").value = "";-->
+<!--        document.getElementById("resultSection").style.display = "none";-->
+<!--    });-->
+
+<!--    document.getElementById("copyBtn").addEventListener("click", function () {-->
+<!--        const base64Text = document.getElementById("base64Output").value;-->
+<!--        navigator.clipboard.writeText(base64Text)-->
+<!--            .then(() => {-->
+<!--                alert("Copied to clipboard!");-->
+<!--            })-->
+<!--            .catch(err => {-->
+<!--                alert("Failed to copy: " + err);-->
+<!--            });-->
+<!--    });-->
+<!--</script>-->
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("base64Form").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const fileInput = document.getElementById("fileInput");
+            const host = window.location.hostname;
+            const port = window.location.port || 8084;
+            const baseUrl = `http://${host}:${port}`;
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            fetch(`${baseUrl}/api/files/to-base64`, {
+                method: "POST",
+                body: formData
+            })
+                .then(response => response.text())
+                .then(base64 => {
+                    document.getElementById("base64Output").value = base64;
+                    document.getElementById("resultSection").style.display = "block";
+                })
+                .catch(err => {
+                    alert("Error: " + err.message);
+                });
+        });
+
+        document.getElementById("resetBtn").addEventListener("click", function () {
+            document.getElementById("fileInput").value = "";
+            document.getElementById("base64Output").value = "";
+            document.getElementById("resultSection").style.display = "none";
+        });
+
+        document.getElementById("copyBtn").addEventListener("click", function () {
+            const base64Text = document.getElementById("base64Output").value;
+
+            const showNotification = () => {
+                const notif = document.getElementById("copyNotification");
+                notif.style.display = "block";
+                setTimeout(() => notif.style.display = "none", 2000);
+            };
+
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(base64Text)
+                    .then(showNotification)
+                    .catch(() => fallbackCopy(base64Text, showNotification));
+            } else {
+                fallbackCopy(base64Text, showNotification);
+            }
+        });
+
+        function fallbackCopy(text, callback) {
+            const tempTextarea = document.createElement("textarea");
+            tempTextarea.value = text;
+            document.body.appendChild(tempTextarea);
+            tempTextarea.select();
+            try {
+                document.execCommand("copy");
+                callback();
+            } catch (err) {
+                console.error("Fallback copy failed", err);
+            }
+            document.body.removeChild(tempTextarea);
+        }
+
+
+    });
+</script>
+
+</body>
+</html>

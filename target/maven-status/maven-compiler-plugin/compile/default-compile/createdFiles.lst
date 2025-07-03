@@ -1,0 +1,6 @@
+com\gtl\ImageAuditTool\controller\JsonFormatterController.class
+com\gtl\ImageAuditTool\controller\ViewController.class
+com\gtl\ImageAuditTool\controller\FileController.class
+com\gtl\ImageAuditTool\config\WebConfig.class
+com\gtl\ImageAuditTool\ImageAuditToolApplication.class
+com\gtl\ImageAuditTool\controller\ImageTypeController.class

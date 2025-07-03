@@ -5,7 +5,7 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<div th:replace="fragments/header :: header"></div>
+<div th:replace="~{fragments/header :: header}"></div>
 <h2>Base64 to File Downloader</h2>
 <textarea id="base64Input" rows="20" cols="100" placeholder="Paste your base64 string here"></textarea><br><br>
 <button onclick="downloadFile()">Download File</button>

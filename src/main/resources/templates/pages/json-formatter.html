@@ -602,18 +602,38 @@
         const output = document.getElementById("jsonOutput");
         const text = output.textContent || output.innerText;
 
-        navigator.clipboard.writeText(text).then(() => {
-            setOutputStatus("Copied to clipboard", "success");
-        }).catch(() => {
-            // Fallback for older browsers
+        if (navigator.clipboard && window.isSecureContext) {
+            // Try modern clipboard API
+            navigator.clipboard.writeText(text).then(() => {
+                setOutputStatus("Copied to clipboard", "success");
+            }).catch(err => {
+                console.warn("Clipboard API failed, falling back:", err);
+                fallbackCopy(text);
+            });
+        } else {
+            // Fallback for HTTP or unsupported browser
+            fallbackCopy(text);
+        }
+    }
+
+    function fallbackCopy(text) {
+        try {
             const textarea = document.createElement("textarea");
             textarea.value = text;
+            textarea.style.position = "fixed"; // Prevent scroll jump
+            textarea.style.opacity = "0";
             document.body.appendChild(textarea);
+            textarea.focus();
             textarea.select();
-            document.execCommand("copy");
+
+            const success = document.execCommand("copy");
             document.body.removeChild(textarea);
-            setOutputStatus("Copied to clipboard", "success");
-        });
+
+            setOutputStatus(success ? "Copied to clipboard" : "Copy failed", success ? "success" : "error");
+        } catch (err) {
+            console.error("Fallback copy failed:", err);
+            setOutputStatus("Copy not supported", "error");
+        }
     }
 
     function resetJson() {

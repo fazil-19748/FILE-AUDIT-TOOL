@@ -448,7 +448,6 @@
                         placeholder="Paste your Base64 encoded string here..."
                         required
                 ></textarea>
-                <div class="char-count" id="charCount">0 characters</div>
             </div>
 
             <!-- Buttons -->
@@ -501,8 +500,6 @@
     // Character count update
     base64Input.addEventListener('input', function() {
         const count = this.value.length;
-        charCount.textContent = `${count.toLocaleString()} characters`;
-
         // Update download button state
         downloadBtn.disabled = count === 0;
     });
@@ -516,12 +513,30 @@
     });
 
     // Paste button
-    pasteBtn.addEventListener('click', async function() {
+    pasteBtn.addEventListener('click', async function () {
         try {
             const text = await navigator.clipboard.readText();
-            base64Input.value = text;
-            base64Input.dispatchEvent(new Event('input'));
-            showStatus('success', 'Content Pasted', 'Base64 content has been pasted from clipboard.');
+
+            base64Input.value = '';
+            downloadBtn.disabled = true;
+            charCount.textContent = `0 characters`;
+
+            const chunkSize = 10000; // characters
+            let index = 0;
+
+            function pasteChunk() {
+                if (index < text.length) {
+                    base64Input.value += text.slice(index, index + chunkSize);
+                    index += chunkSize;
+                    charCount.textContent = `${base64Input.value.length.toLocaleString()} characters`;
+                    downloadBtn.disabled = false;
+                    setTimeout(pasteChunk, 0); // schedule next chunk
+                } else {
+                    showStatus('success', 'Content Pasted', 'Base64 content has been pasted from clipboard.');
+                }
+            }
+
+            pasteChunk(); // start chunked paste
         } catch (err) {
             showStatus('error', 'Paste Failed', 'Unable to access clipboard. Please paste manually using Ctrl+V.');
         }

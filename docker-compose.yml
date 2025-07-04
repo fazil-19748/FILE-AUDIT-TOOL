@@ -1,0 +1,6 @@
+services:
+  converter-tool:
+    image: hub.fliplabs.net/converter-tool:v1.3
+    ports:
+      - "8094:8094"
+    restart: always

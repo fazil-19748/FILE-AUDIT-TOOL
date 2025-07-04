@@ -1,33 +1,549 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Image Type Detector</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <title>File Type Detector | GTL DevKit</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Professional background matching homepage */
+        .bg-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            background:
+                    radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, rgba(147, 51, 234, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 40% 60%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
+        }
+
+        .bg-pattern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        /* Navigation */
+        .nav {
+            position: relative;
+            z-index: 3;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .nav-logo:hover {
+            color: #3b82f6;
+        }
+
+        .nav-back {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #9ca3af;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+        }
+
+        .nav-back:hover {
+            color: #ffffff;
+        }
+
+        /* Main container */
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 60px 20px;
+            min-height: calc(100vh - 80px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 12px;
+            letter-spacing: -0.02em;
+        }
+
+        .page-subtitle {
+            font-size: 1.1rem;
+            color: #9ca3af;
+            margin-bottom: 8px;
+        }
+
+        .page-description {
+            font-size: 1rem;
+            color: #6b7280;
+            max-width: 500px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main card */
+        .main-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 40px;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+            margin-bottom: 30px;
+        }
+
+        /* Upload form */
+        .upload-form {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* File input container */
+        .file-input-container {
+            position: relative;
+        }
+
+        .file-input {
+            width: 100%;
+            height: 120px;
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .file-input:hover {
+            border-color: rgba(59, 130, 246, 0.5);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .file-input.dragover {
+            border-color: rgba(59, 130, 246, 0.8);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .file-input input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-input-content {
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .file-input-icon {
+            font-size: 2rem;
+            color: #9ca3af;
+            margin-bottom: 8px;
+        }
+
+        .file-input-text {
+            color: #d1d5db;
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+
+        .file-input-subtext {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        /* File selected state */
+        .file-selected {
+            border-color: rgba(16, 185, 129, 0.5);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .file-selected .file-input-icon {
+            color: #10b981;
+        }
+
+        .file-selected .file-input-text {
+            color: #10b981;
+        }
+
+        /* Button container */
+        .button-container {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 120px;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: #6b7280;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #d1d5db;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
+
+        /* Result container */
+        .result-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 30px;
+            animation: fadeInUp 0.5s ease-out;
+            display: none;
+        }
+
+        .result-container.show {
+            display: block;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .result-icon {
+            font-size: 1.5rem;
+        }
+
+        .result-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .result-content {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #10b981;
+        }
+
+        .result-text {
+            font-size: 1.1rem;
+            color: #d1d5db;
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            word-break: break-all;
+        }
+
+        /* Error state */
+        .result-error {
+            border-left-color: #ef4444;
+        }
+
+        .result-error .result-icon {
+            color: #ef4444;
+        }
+
+        /* Loading state */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #9ca3af;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-top: 2px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-card {
+                padding: 24px;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .button-container {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+        /* Smooth loading */
+        body {
+            opacity: 0;
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
 </head>
 <body>
-<div th:replace="~{fragments/header :: header}"></div>
+<!-- Professional background -->
+<div class="bg-pattern"></div>
 
-<h2>Detect File Type</h2>
+<!-- Navigation -->
+<nav class="nav">
+    <div class="nav-container">
+        <a href="/home" class="nav-logo">GTL DevKit</a>
+        <a href="/home" class="nav-back">← Back to Home</a>
+    </div>
+</nav>
 
-<form id="uploadForm" enctype="multipart/form-data">
-    <input type="file" name="file" id="fileInput" required />
-    <br/><br/>
-    <button type="submit">Check File Type</button>
-    <button type="button" id="resetBtn">Reset</button>
-</form>
+<!-- Main container -->
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <h1 class="page-title">File Type Detector</h1>
+        <p class="page-subtitle">Advanced File Analysis</p>
+        <p class="page-description">Upload any file to instantly discover its true format using advanced detection algorithms</p>
+    </div>
 
-<div id="result" style="margin-top:20px; display: none;"></div> <!-- Initially hidden -->
+    <!-- Main card -->
+    <div class="main-card">
+        <form id="uploadForm" class="upload-form" enctype="multipart/form-data">
+            <!-- File input -->
+            <div class="file-input-container">
+                <div class="file-input" id="fileInputZone">
+                    <input type="file" name="file" id="fileInput" required />
+                    <div class="file-input-content">
+                        <div class="file-input-icon">📁</div>
+                        <div class="file-input-text">Choose a file or drag and drop</div>
+                        <div class="file-input-subtext">Any file type supported</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="button-container">
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <span>🔍</span>
+                    Detect File Type
+                </button>
+                <button type="button" class="btn btn-secondary" id="resetBtn">
+                    <span>🔄</span>
+                    Reset
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Loading state -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div>Analyzing file...</div>
+    </div>
+
+    <!-- Result container -->
+    <div class="result-container" id="resultContainer">
+        <div class="result-header">
+            <span class="result-icon">✅</span>
+            <h3 class="result-title">Detection Result</h3>
+        </div>
+        <div class="result-content">
+            <div class="result-text" id="resultText"></div>
+        </div>
+    </div>
+</div>
 
 <script>
     const form = document.getElementById("uploadForm");
-    const result = document.getElementById("result");
+    const fileInput = document.getElementById("fileInput");
+    const fileInputZone = document.getElementById("fileInputZone");
+    const submitBtn = document.getElementById("submitBtn");
     const resetBtn = document.getElementById("resetBtn");
+    const resultContainer = document.getElementById("resultContainer");
+    const resultText = document.getElementById("resultText");
+    const loading = document.getElementById("loading");
 
+    // Drag and drop functionality
+    fileInputZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        fileInputZone.classList.add('dragover');
+    });
+
+    fileInputZone.addEventListener('dragleave', () => {
+        fileInputZone.classList.remove('dragover');
+    });
+
+    fileInputZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        fileInputZone.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            updateFileInputDisplay();
+        }
+    });
+
+    // File input change
+    fileInput.addEventListener('change', updateFileInputDisplay);
+
+    function updateFileInputDisplay() {
+        const file = fileInput.files[0];
+        if (file) {
+            fileInputZone.classList.add('file-selected');
+            fileInputZone.querySelector('.file-input-text').textContent = file.name;
+            fileInputZone.querySelector('.file-input-subtext').textContent = `${(file.size / 1024).toFixed(1)} KB`;
+            fileInputZone.querySelector('.file-input-icon').textContent = '📄';
+        } else {
+            resetFileInputDisplay();
+        }
+    }
+
+    function resetFileInputDisplay() {
+        fileInputZone.classList.remove('file-selected');
+        fileInputZone.querySelector('.file-input-text').textContent = 'Choose a file or drag and drop';
+        fileInputZone.querySelector('.file-input-subtext').textContent = 'Any file type supported';
+        fileInputZone.querySelector('.file-input-icon').textContent = '📁';
+    }
+
+    // Form submission
     form.addEventListener("submit", async function(e) {
         e.preventDefault();
 
-        const fileInput = document.getElementById("fileInput");
+        if (!fileInput.files[0]) {
+            return;
+        }
+
+        // Show loading state
+        loading.classList.add('show');
+        resultContainer.classList.remove('show');
+        submitBtn.disabled = true;
+
         const host = window.location.hostname;
         const port = window.location.port || 8094;
         const baseUrl = `http://${host}:${port}`;
@@ -41,20 +557,35 @@
             });
 
             const text = await response.text();
-            result.innerHTML = `<strong>${text}</strong>`;
-            result.style.display = "block"; // Show the result div
+
+            // Show result
+            resultText.textContent = text;
+            resultContainer.classList.add('show');
+            resultContainer.classList.remove('result-error');
+            resultContainer.querySelector('.result-icon').textContent = '✅';
+            resultContainer.querySelector('.result-title').textContent = 'Detection Result';
+
         } catch (error) {
-            result.innerHTML = `<strong>Error:</strong> ${error}`;
-            result.style.display = "block"; // Show the result div
+            // Show error
+            resultText.textContent = `Error: ${error.message}`;
+            resultContainer.classList.add('show', 'result-error');
+            resultContainer.querySelector('.result-icon').textContent = '❌';
+            resultContainer.querySelector('.result-title').textContent = 'Error';
+        } finally {
+            // Hide loading state
+            loading.classList.remove('show');
+            submitBtn.disabled = false;
         }
     });
 
-    resetBtn.addEventListener("click", function () {
-        document.getElementById("fileInput").value = null;
-        result.innerHTML = "";
-        result.style.display = "none"; // Hide the result div
+    // Reset functionality
+    resetBtn.addEventListener("click", function() {
+        fileInput.value = '';
+        resetFileInputDisplay();
+        resultContainer.classList.remove('show');
+        loading.classList.remove('show');
+        submitBtn.disabled = false;
     });
 </script>
-
 </body>
 </html>

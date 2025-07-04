@@ -1,49 +1,645 @@
 <!DOCTYPE html>
-<html>
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Base64 Decoder</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <title>Base64 to File Downloader | GTL DevKit</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Professional background matching homepage */
+        .bg-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            background:
+                    radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, rgba(147, 51, 234, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 40% 60%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
+        }
+
+        .bg-pattern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        /* Navigation */
+        .nav {
+            position: relative;
+            z-index: 3;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .nav-logo:hover {
+            color: #3b82f6;
+        }
+
+        .nav-back {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #9ca3af;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+        }
+
+        .nav-back:hover {
+            color: #ffffff;
+        }
+
+        /* Main container */
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 60px 20px;
+            min-height: calc(100vh - 80px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 12px;
+            letter-spacing: -0.02em;
+        }
+
+        .page-subtitle {
+            font-size: 1.1rem;
+            color: #9ca3af;
+            margin-bottom: 8px;
+        }
+
+        .page-description {
+            font-size: 1rem;
+            color: #6b7280;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main card */
+        .main-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 40px;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+            margin-bottom: 30px;
+        }
+
+        /* Form */
+        .decode-form {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Textarea container */
+        .textarea-container {
+            position: relative;
+        }
+
+        .textarea-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #d1d5db;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .base64-textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 0.9rem;
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            resize: vertical;
+            transition: all 0.3s ease;
+            line-height: 1.4;
+        }
+
+        .base64-textarea:focus {
+            outline: none;
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .base64-textarea::placeholder {
+            color: #6b7280;
+        }
+
+        /* Character count */
+        .char-count {
+            position: absolute;
+            bottom: 12px;
+            right: 16px;
+            color: #6b7280;
+            font-size: 0.8rem;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 4px 8px;
+            border-radius: 4px;
+            pointer-events: none;
+        }
+
+        /* Button container */
+        .button-container {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 140px;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: #6b7280;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #d1d5db;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: #9ca3af;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+        }
+
+        /* Loading state */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #9ca3af;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-top: 2px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Status card */
+        .status-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            animation: fadeInUp 0.5s ease-out;
+            display: none;
+        }
+
+        .status-card.show {
+            display: block;
+        }
+
+        .status-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .status-icon {
+            font-size: 1.25rem;
+        }
+
+        .status-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .status-message {
+            color: #d1d5db;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        /* Success state */
+        .status-success {
+            border-left: 4px solid #10b981;
+        }
+
+        .status-success .status-icon {
+            color: #10b981;
+        }
+
+        /* Error state */
+        .status-error {
+            border-left: 4px solid #ef4444;
+        }
+
+        .status-error .status-icon {
+            color: #ef4444;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-card {
+                padding: 24px;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .button-container {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .base64-textarea {
+                min-height: 150px;
+            }
+        }
+
+        /* Smooth loading */
+        body {
+            opacity: 0;
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Utility classes */
+        .text-center {
+            text-align: center;
+        }
+
+        .mb-4 {
+            margin-bottom: 1rem;
+        }
+    </style>
 </head>
 <body>
-<div th:replace="~{fragments/header :: header}"></div>
-<h2>Base64 to File Downloader</h2>
-<textarea id="base64Input" rows="20" cols="100" placeholder="Paste your base64 string here"></textarea><br><br>
-<button onclick="downloadFile()">Download File</button>
+<!-- Professional background -->
+<div class="bg-pattern"></div>
+
+<!-- Navigation -->
+<nav class="nav">
+    <div class="nav-container">
+        <a href="/home" class="nav-logo">GTL DevKit</a>
+        <a href="/home" class="nav-back">← Back to Home</a>
+    </div>
+</nav>
+
+<!-- Main container -->
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <h1 class="page-title">Base64 to File Downloader</h1>
+        <p class="page-subtitle">Decode & Download Files</p>
+        <p class="page-description">Convert Base64 encoded strings back to their original file format and download them instantly</p>
+    </div>
+
+    <!-- Main card -->
+    <div class="main-card">
+        <form id="decodeForm" class="decode-form">
+            <!-- Textarea input -->
+            <div class="textarea-container">
+                <label for="base64Input" class="textarea-label">
+                    📄 Base64 String
+                </label>
+                <textarea
+                        id="base64Input"
+                        class="base64-textarea"
+                        placeholder="Paste your Base64 encoded string here..."
+                        required
+                ></textarea>
+                <div class="char-count" id="charCount">0 characters</div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="button-container">
+                <button type="submit" class="btn btn-primary" id="downloadBtn">
+                    <span>⬇️</span>
+                    Download File
+                </button>
+                <button type="button" class="btn btn-secondary" id="clearBtn">
+                    <span>🗑️</span>
+                    Clear
+                </button>
+                <button type="button" class="btn btn-outline" id="pasteBtn">
+                    <span>📋</span>
+                    Paste
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Loading state -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div>Processing Base64 data...</div>
+    </div>
+
+    <!-- Status card -->
+    <div class="status-card" id="statusCard">
+        <div class="status-header">
+            <span class="status-icon" id="statusIcon">✅</span>
+            <h3 class="status-title" id="statusTitle">Success</h3>
+        </div>
+        <div class="status-message" id="statusMessage"></div>
+    </div>
+</div>
 
 <script>
-    function downloadFile() {
-        const base64Data = document.getElementById('base64Input').value;
+    const form = document.getElementById("decodeForm");
+    const base64Input = document.getElementById("base64Input");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const pasteBtn = document.getElementById("pasteBtn");
+    const charCount = document.getElementById("charCount");
+    const loading = document.getElementById("loading");
+    const statusCard = document.getElementById("statusCard");
+    const statusIcon = document.getElementById("statusIcon");
+    const statusTitle = document.getElementById("statusTitle");
+    const statusMessage = document.getElementById("statusMessage");
+
+    // Character count update
+    base64Input.addEventListener('input', function() {
+        const count = this.value.length;
+        charCount.textContent = `${count.toLocaleString()} characters`;
+
+        // Update download button state
+        downloadBtn.disabled = count === 0;
+    });
+
+    // Clear button
+    clearBtn.addEventListener('click', function() {
+        base64Input.value = '';
+        charCount.textContent = '0 characters';
+        downloadBtn.disabled = true;
+        hideStatus();
+    });
+
+    // Paste button
+    pasteBtn.addEventListener('click', async function() {
+        try {
+            const text = await navigator.clipboard.readText();
+            base64Input.value = text;
+            base64Input.dispatchEvent(new Event('input'));
+            showStatus('success', 'Content Pasted', 'Base64 content has been pasted from clipboard.');
+        } catch (err) {
+            showStatus('error', 'Paste Failed', 'Unable to access clipboard. Please paste manually using Ctrl+V.');
+        }
+    });
+
+    // Form submission
+    form.addEventListener("submit", async function(e) {
+        e.preventDefault();
+
+        const base64Data = base64Input.value.trim();
+        if (!base64Data) {
+            showStatus('error', 'No Data', 'Please enter a Base64 string to decode.');
+            return;
+        }
+
+        // Show loading state
+        showLoading();
+        hideStatus();
+
         const host = window.location.hostname;
         const port = window.location.port || 8094;
         const baseUrl = `http://${host}:${port}`;
 
-        fetch(`${baseUrl}/api/files/decode`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'text/plain'
-            },
-            body: base64Data
-        })
-            .then(response => {
-                if (!response.ok) throw new Error("Invalid response");
-                return response.blob();
-            })
-            .then(blob => {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
+        try {
+            const response = await fetch(`${baseUrl}/api/files/decode`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain'
+                },
+                body: base64Data
+            });
 
-                // Try to guess filename from content-type
-                const contentType = blob.type;
-                const extension = contentType.split('/')[1] || 'bin';
-                a.download = 'decoded_file.' + extension;
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status} ${response.statusText}`);
+            }
 
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-            })
-            .catch(err => alert("Error: " + err.message));
+            const blob = await response.blob();
+
+            // Create download link
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+
+            // Try to guess filename from content-type
+            const contentType = blob.type || 'application/octet-stream';
+            const extension = getFileExtension(contentType);
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+            a.download = `decoded_file_${timestamp}.${extension}`;
+
+            // Trigger download
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            // Show success message
+            showStatus('success', 'Download Started',
+                `File successfully decoded and download started. File type: ${contentType}, Size: ${(blob.size / 1024).toFixed(1)} KB`);
+
+        } catch (error) {
+            console.error('Download error:', error);
+            showStatus('error', 'Download Failed',
+                `Error: ${error.message}. Please check your Base64 string and try again.`);
+        } finally {
+            hideLoading();
+        }
+    });
+
+    // Helper function to get file extension from content type
+    function getFileExtension(contentType) {
+        const mimeToExt = {
+            'image/jpeg': 'jpg',
+            'image/png': 'png',
+            'image/gif': 'gif',
+            'image/webp': 'webp',
+            'image/svg+xml': 'svg',
+            'text/plain': 'txt',
+            'text/html': 'html',
+            'text/css': 'css',
+            'text/javascript': 'js',
+            'application/json': 'json',
+            'application/xml': 'xml',
+            'application/pdf': 'pdf',
+            'application/zip': 'zip',
+            'application/x-zip-compressed': 'zip',
+            'application/octet-stream': 'bin'
+        };
+
+        return mimeToExt[contentType] || contentType.split('/')[1] || 'bin';
     }
+
+    // Show loading state
+    function showLoading() {
+        loading.classList.add('show');
+        downloadBtn.disabled = true;
+    }
+
+    // Hide loading state
+    function hideLoading() {
+        loading.classList.remove('show');
+        downloadBtn.disabled = base64Input.value.trim() === '';
+    }
+
+    // Show status message
+    function showStatus(type, title, message) {
+        statusCard.className = `status-card status-${type} show`;
+        statusIcon.textContent = type === 'success' ? '✅' : '❌';
+        statusTitle.textContent = title;
+        statusMessage.textContent = message;
+    }
+
+    // Hide status message
+    function hideStatus() {
+        statusCard.classList.remove('show');
+    }
+
+    // Initial state
+    downloadBtn.disabled = true;
 </script>
 </body>
 </html>

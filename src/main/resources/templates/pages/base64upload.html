@@ -1,138 +1,770 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html>
 <head>
     <title>File to Base64 Converter</title>
     <meta charset="UTF-8">
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Professional geometric background */
+        .bg-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            background:
+                    radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, rgba(147, 51, 234, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 40% 60%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
+            background-size: 100% 100%;
+        }
+
+        /* Subtle grid overlay */
+        .bg-pattern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        /* Floating orbs */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.4;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .orb:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.1), transparent);
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .orb:nth-child(2) {
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(147, 51, 234, 0.1), transparent);
+            top: 60%;
+            right: 10%;
+            animation-delay: 2s;
+        }
+
+        .orb:nth-child(3) {
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.08), transparent);
+            bottom: 20%;
+            left: 20%;
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) translateX(0px); }
+            25% { transform: translateY(-20px) translateX(10px); }
+            50% { transform: translateY(-10px) translateX(-10px); }
+            75% { transform: translateY(-30px) translateX(5px); }
+        }
+
+        /* Container */
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        /* Navigation */
+        .nav {
+            position: relative;
+            z-index: 3;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-decoration: none;
+            letter-spacing: -0.025em;
+            transition: all 0.3s ease;
+        }
+
+        .nav-logo:hover {
+            color: #3b82f6;
+        }
+
+        .nav-back {
+            background: none;
+            border: none;
+            border-radius: 0;
+            padding: 12px 20px;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-back:hover {
+            color: #9ca3af;
+            transform: translateX(-2px);
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 16px;
+            letter-spacing: -0.025em;
+            position: relative;
+            display: inline-block;
+        }
+
+        .page-title::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #9333ea);
+            border-radius: 2px;
+        }
+
+        .page-subtitle {
+            font-size: 1.1rem;
+            color: #9ca3af;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main content card */
+        .main-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 1s ease-out 0.2s both;
+        }
+
+        .main-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* Form styling */
+        .form-container {
+            position: relative;
+            z-index: 2;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #e5e7eb;
+            margin-bottom: 8px;
+            letter-spacing: -0.01em;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .file-input-display {
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .file-input-display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .file-input-display:hover::before {
+            opacity: 1;
+        }
+
+        .file-input-display:hover {
+            border-color: rgba(59, 130, 246, 0.5);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .file-input-icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            opacity: 0.8;
+        }
+
+        .file-input-text {
+            font-size: 1rem;
+            color: #d1d5db;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .file-input-subtext {
+            font-size: 0.875rem;
+            color: #9ca3af;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Button styling */
+        .button-group {
+            display: flex;
+            gap: 16px;
+            margin-top: 32px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: -0.01em;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .btn:hover::before {
+            opacity: 1;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e5e7eb;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
+        .btn-copy {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-copy:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Result section */
+        .result-section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 40px;
+            margin-top: 30px;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 1s ease-out 0.4s both;
+        }
+
+        .result-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, transparent 50%);
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .result-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .result-textarea {
+            width: 100%;
+            min-height: 200px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9rem;
+            color: #e5e7eb;
+            resize: vertical;
+            line-height: 1.5;
+            position: relative;
+            z-index: 2;
+        }
+
+        .result-textarea:focus {
+            outline: none;
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            box-shadow: 0 8px 32px rgba(16, 185, 129, 0.3);
+            z-index: 1000;
+            display: none;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateX(-50%) translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 15px;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .main-card, .result-section {
+                padding: 24px;
+            }
+
+            .button-group {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .nav-container {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .nav-back {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                color: #9ca3af;
+                text-decoration: none;
+                font-size: 0.9rem;
+                transition: color 0.3s ease;
+            }
+
+            .nav-back:hover {
+                color: #ffffff;
+            }
+        }
+
+        /* Loading state */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(59, 130, 246, 0.3);
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* File selected state */
+        .file-selected .file-input-display {
+            border-color: rgba(16, 185, 129, 0.5);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .file-selected .file-input-icon {
+            color: #10b981;
+        }
+
+        .file-selected .file-input-text {
+            color: #10b981;
+        }
+
+        /* Smooth loading */
+        body {
+            opacity: 0;
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
 </head>
-<div id="copyNotification" style="
-    display: none;
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: #089c48;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-size: 14px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    z-index: 1000;
-">
-    Copied to clipboard!
-</div>
-
-
 <body>
-<div th:replace="~{fragments/header :: header}"></div>
-
-<h2>Convert File to Base64</h2>
-
-<div class="form-container">
-    <form id="base64Form">
-        <label for="fileInput">Select File:</label><br>
-        <input type="file" id="fileInput" name="file" required><br><br>
-
-        <button type="submit">Convert to Base64</button>
-        <button type="button" id="resetBtn">Reset</button>
-    </form>
+<!-- Professional background -->
+<div class="bg-pattern">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
 </div>
 
-<div id="resultSection" style="display: none; margin-top: 20px;">
-    <h3>Base64 Output:</h3>
-    <textarea id="base64Output" rows="10" readonly style="width: 100%;"></textarea>
-    <br>
-    <button id="copyBtn" type="button">Copy to Clipboard</button>
+<!-- Copy notification -->
+<div id="copyNotification" class="notification">
+    ✓ Copied to clipboard!
 </div>
 
-<!--<script>-->
-<!--    document.getElementById("base64Form").addEventListener("submit", function (e) {-->
-<!--        e.preventDefault();-->
+<!-- Navigation -->
+<nav class="nav">
+    <div class="nav-container">
+        <a href="/home" class="nav-logo">GTL DevKit</a>
+        <a href="/home" class="nav-back">← Back to Home</a>
+    </div>
+</nav>
 
-<!--        const fileInput = document.getElementById("fileInput");-->
-<!--        const file = fileInput.files[0];-->
-<!--        if (!file) return;-->
+<div class="container">
+    <div class="header">
+        <h1 class="page-title">File to Base64</h1>
+        <p class="page-subtitle">Convert any file to Base64 encoding for web integration and data transfer</p>
+    </div>
 
-<!--        const formData = new FormData();-->
-<!--        formData.append("file", file);-->
+    <div class="main-card">
+        <div class="form-container">
+            <div class="form-group">
+                <label for="fileInput">Select File</label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="fileInput" name="file">
+                    <div class="file-input-display" id="fileDisplay">
+                        <div class="file-input-icon">📁</div>
+                        <div class="file-input-text">Click to select a file</div>
+                        <div class="file-input-subtext">or drag and drop here</div>
+                    </div>
+                </div>
+            </div>
 
-<!--        fetch(`http://${window.location.hostname}:8084/api/files/to-base64`, {-->
-<!--            method: "POST",-->
-<!--            body: formData-->
-<!--        })-->
-<!--            .then(response => response.text())-->
-<!--            .then(base64 => {-->
-<!--                document.getElementById("base64Output").value = base64;-->
-<!--                document.getElementById("resultSection").style.display = "block";-->
-<!--            })-->
-<!--            .catch(err => {-->
-<!--                alert("Error: " + err.message);-->
-<!--            });-->
-<!--    });-->
+            <div class="button-group">
+                <button type="button" id="convertBtn" class="btn btn-primary">
+                    🔄 Convert to Base64
+                </button>
+                <button type="button" id="resetBtn" class="btn btn-secondary">
+                    🗑️ Reset
+                </button>
+            </div>
+        </div>
+    </div>
 
-<!--    document.getElementById("resetBtn").addEventListener("click", function () {-->
-<!--        document.getElementById("fileInput").value = "";-->
-<!--        document.getElementById("base64Output").value = "";-->
-<!--        document.getElementById("resultSection").style.display = "none";-->
-<!--    });-->
-
-<!--    document.getElementById("copyBtn").addEventListener("click", function () {-->
-<!--        const base64Text = document.getElementById("base64Output").value;-->
-<!--        navigator.clipboard.writeText(base64Text)-->
-<!--            .then(() => {-->
-<!--                alert("Copied to clipboard!");-->
-<!--            })-->
-<!--            .catch(err => {-->
-<!--                alert("Failed to copy: " + err);-->
-<!--            });-->
-<!--    });-->
-<!--</script>-->
+    <div id="resultSection" class="result-section" style="display: none;">
+        <h3 class="result-title">Base64 Output</h3>
+        <textarea id="base64Output" class="result-textarea" readonly placeholder="Base64 encoded content will appear here..."></textarea>
+        <div class="button-group" style="margin-top: 20px;">
+            <button id="copyBtn" type="button" class="btn btn-copy">
+                📋 Copy to Clipboard
+            </button>
+        </div>
+    </div>
+</div>
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        document.getElementById("base64Form").addEventListener("submit", function (e) {
+        const fileInput = document.getElementById("fileInput");
+        const fileDisplay = document.getElementById("fileDisplay");
+        const convertBtn = document.getElementById("convertBtn");
+        const resetBtn = document.getElementById("resetBtn");
+        const resultSection = document.getElementById("resultSection");
+        const base64Output = document.getElementById("base64Output");
+        const copyBtn = document.getElementById("copyBtn");
+
+        // File input display update
+        fileInput.addEventListener("change", function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                fileDisplay.classList.add("file-selected");
+                fileDisplay.innerHTML = `
+                    <div class="file-input-icon">📄</div>
+                    <div class="file-input-text">${file.name}</div>
+                    <div class="file-input-subtext">${formatFileSize(file.size)}</div>
+                `;
+                convertBtn.disabled = false;
+            } else {
+                resetFileDisplay();
+                convertBtn.disabled = true;
+            }
+        });
+
+        // Drag and drop functionality
+        fileDisplay.addEventListener("dragover", function(e) {
             e.preventDefault();
+            e.stopPropagation();
+            this.style.borderColor = "rgba(59, 130, 246, 0.7)";
+        });
 
-            const fileInput = document.getElementById("fileInput");
-            const host = window.location.hostname;
-            const port = window.location.port || 8094;
-            const baseUrl = `http://${host}:${port}`;
+        fileDisplay.addEventListener("dragleave", function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.style.borderColor = "rgba(255, 255, 255, 0.2)";
+        });
+
+        fileDisplay.addEventListener("drop", function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.style.borderColor = "rgba(255, 255, 255, 0.2)";
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                // Create a new FileList-like object
+                const dt = new DataTransfer();
+                dt.items.add(files[0]);
+                fileInput.files = dt.files;
+
+                // Trigger change event
+                fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+
+        // Click on display to trigger file input
+        fileDisplay.addEventListener("click", function() {
+            fileInput.click();
+        });
+
+        // Convert button functionality
+        convertBtn.addEventListener("click", function() {
             const file = fileInput.files[0];
-            if (!file) return;
+            if (!file) {
+                alert("Please select a file first!");
+                return;
+            }
 
-            const formData = new FormData();
-            formData.append("file", file);
+            // Add loading state
+            convertBtn.classList.add("loading");
+            convertBtn.disabled = true;
 
-            fetch(`${baseUrl}/api/files/to-base64`, {
-                method: "POST",
-                body: formData
-            })
-                .then(response => response.text())
-                .then(base64 => {
-                    document.getElementById("base64Output").value = base64;
-                    document.getElementById("resultSection").style.display = "block";
-                })
-                .catch(err => {
-                    alert("Error: " + err.message);
-                });
+            // Use FileReader to convert file to base64
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                // Remove data URL prefix (data:mime/type;base64,)
+                const base64String = e.target.result.split(',')[1];
+
+                base64Output.value = base64String;
+                resultSection.style.display = "block";
+                resultSection.scrollIntoView({ behavior: 'smooth' });
+
+                // Remove loading state
+                convertBtn.classList.remove("loading");
+                convertBtn.disabled = false;
+            };
+
+            reader.onerror = function() {
+                alert("Error reading file!");
+                convertBtn.classList.remove("loading");
+                convertBtn.disabled = false;
+            };
+
+            // Read file as data URL
+            reader.readAsDataURL(file);
         });
 
-        document.getElementById("resetBtn").addEventListener("click", function () {
-            document.getElementById("fileInput").value = "";
-            document.getElementById("base64Output").value = "";
-            document.getElementById("resultSection").style.display = "none";
+        // Reset functionality
+        resetBtn.addEventListener("click", function () {
+            fileInput.value = "";
+            base64Output.value = "";
+            resultSection.style.display = "none";
+            resetFileDisplay();
+            convertBtn.disabled = true;
         });
 
-        document.getElementById("copyBtn").addEventListener("click", function () {
-            const base64Text = document.getElementById("base64Output").value;
+        // Copy to clipboard
+        copyBtn.addEventListener("click", function () {
+            const base64Text = base64Output.value;
 
             const showNotification = () => {
                 const notif = document.getElementById("copyNotification");
                 notif.style.display = "block";
-                setTimeout(() => notif.style.display = "none", 2000);
+                setTimeout(() => {
+                    notif.style.display = "none";
+                }, 2000);
             };
 
-            if (navigator.clipboard) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(base64Text)
                     .then(showNotification)
                     .catch(() => fallbackCopy(base64Text, showNotification));
@@ -141,23 +773,66 @@
             }
         });
 
+        // Helper functions
+        function resetFileDisplay() {
+            fileDisplay.classList.remove("file-selected");
+            fileDisplay.innerHTML = `
+                <div class="file-input-icon">📁</div>
+                <div class="file-input-text">Click to select a file</div>
+                <div class="file-input-subtext">or drag and drop here</div>
+            `;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
         function fallbackCopy(text, callback) {
             const tempTextarea = document.createElement("textarea");
             tempTextarea.value = text;
+            tempTextarea.style.position = "fixed";
+            tempTextarea.style.opacity = "0";
             document.body.appendChild(tempTextarea);
             tempTextarea.select();
+            tempTextarea.setSelectionRange(0, 99999);
+
             try {
                 document.execCommand("copy");
                 callback();
             } catch (err) {
                 console.error("Fallback copy failed", err);
+                alert("Failed to copy to clipboard");
             }
+
             document.body.removeChild(tempTextarea);
         }
 
+        // Subtle parallax effect
+        let ticking = false;
 
+        function updateParallax() {
+            const scrolled = window.pageYOffset;
+            const rate = scrolled * -0.05;
+            document.querySelector('.bg-pattern').style.transform = `translateY(${rate}px)`;
+            ticking = false;
+        }
+
+        function requestTick() {
+            if (!ticking) {
+                requestAnimationFrame(updateParallax);
+                ticking = true;
+            }
+        }
+
+        window.addEventListener('scroll', requestTick);
+
+        // Initialize
+        convertBtn.disabled = true;
     });
 </script>
-
 </body>
 </html>

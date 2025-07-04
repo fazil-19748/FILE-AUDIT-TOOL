@@ -3,205 +3,383 @@
 <head>
     <title>JSON Formatter</title>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f4f7fa;
+        * {
             margin: 0;
-            padding: 40px;
-            text-align: center;
-            color: #2c3e50;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        h2 {
-            color: #2e86de;
-            margin-bottom: 30px;
-            font-size: 2em;
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+            position: relative;
+            opacity: 0;
+            animation: fadeIn 0.8s ease-out forwards;
         }
 
-        .editor-container {
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Professional background matching homepage */
+        .bg-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            background:
+                    radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, rgba(147, 51, 234, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 40% 60%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
+        }
+
+        .bg-pattern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        /* Navigation */
+        .nav {
+            position: relative;
+            z-index: 3;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
             display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            gap: 20px;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .nav-logo:hover {
+            color: #3b82f6;
+        }
+
+        .nav-back {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #9ca3af;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+        }
+
+        .nav-back:hover {
+            color: #ffffff;
+        }
+
+        /* Main container */
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            min-height: calc(100vh - 80px);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 12px;
+            letter-spacing: -0.02em;
+        }
+
+        .page-subtitle {
+            font-size: 1.1rem;
+            color: #9ca3af;
+            margin-bottom: 8px;
+        }
+
+        .page-description {
+            font-size: 1rem;
+            color: #6b7280;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Editor container */
+        .editor-container {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 24px;
             margin-top: 30px;
-            flex-wrap: wrap;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
         }
 
         .editor {
-            flex: 1;
-            min-width: 400px;
-            max-width: 600px;
             display: flex;
             flex-direction: column;
+            min-width: 0;
         }
 
-        textarea {
-            height: 600px;
-            padding: 12px;
-            background: #ffffff;
-            color: #2c3e50;
-            border-radius: 8px;
-            border: 1px solid #ccd6dd;
-            resize: vertical;
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            font-size: 14px;
-            width: 100%;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-            line-height: 1.5;
-        }
-
-        .output-box {
-            background: #ffffff;
-            border: 1px solid #ccd6dd;
-            border-radius: 8px;
-            padding: 12px;
-            height: 600px;
-            overflow-y: auto;
-            overflow-x: auto;
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            font-size: 14px;
-            text-align: left;
-            display: block;
-            word-wrap: break-word;
-            white-space: pre-wrap;
-            line-height: 1.5;
-        }
-
-        .json-label {
-            font-size: 16px;
-            color: #34495e;
-            margin-bottom: 5px;
-            text-align: left;
+        .editor-label {
+            font-size: 1.1rem;
+            color: #d1d5db;
+            margin-bottom: 12px;
             font-weight: 600;
         }
 
-        .button-panel {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            margin: 40px 20px 0;
-        }
-
-        button {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            min-width: 140px;
-        }
-
-        button:hover {
-            background-color: #2e86de;
-            box-shadow: 0 4px 12px rgba(46, 134, 222, 0.3);
-            transform: translateY(-2px);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        button#resetBtn {
-            background-color: #95a5a6;
-        }
-
-        button#resetBtn:hover {
-            background-color: #7f8c8d;
-        }
-
-        button#minifyBtn {
-            background-color: #e67e22;
-        }
-
-        button#minifyBtn:hover {
-            background-color: #d35400;
-        }
-
-        button#validateBtn {
-            background-color: #27ae60;
-        }
-
-        button#validateBtn:hover {
-            background-color: #2ecc71;
-        }
-
-        button#copyBtn {
-            background-color: #9b59b6;
-        }
-
-        button#copyBtn:hover {
-            background-color: #8e44ad;
-        }
-
+        /* Search container */
         .search-container {
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             position: relative;
         }
 
         .search-input {
             width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ccd6dd;
-            border-radius: 4px;
-            font-size: 13px;
-            box-sizing: border-box;
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #d1d5db;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: rgba(59, 130, 246, 0.5);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .search-input::placeholder {
+            color: #6b7280;
         }
 
         .search-results {
             position: absolute;
-            right: 8px;
+            right: 12px;
             top: 50%;
             transform: translateY(-50%);
-            background: rgba(52, 73, 94, 0.8);
+            background: rgba(59, 130, 246, 0.8);
             color: white;
-            padding: 2px 8px;
+            padding: 4px 8px;
             border-radius: 12px;
             font-size: 11px;
+            font-weight: 500;
             pointer-events: none;
+            backdrop-filter: blur(8px);
         }
 
-        .highlight {
-            background-color: #f39c12 !important;
-            color: #2c3e50 !important;
-            padding: 1px 2px;
-            border-radius: 2px;
+        /* Text areas and output */
+        .editor-textarea {
+            height: 500px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #d1d5db;
+            font-family: 'JetBrains Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: vertical;
+            transition: all 0.3s ease;
         }
 
-        .current-highlight {
-            background-color: #e74c3c !important;
-            color: white !important;
+        .editor-textarea:focus {
+            outline: none;
+            border-color: rgba(59, 130, 246, 0.5);
+            background: rgba(59, 130, 246, 0.02);
         }
 
+        .editor-textarea::placeholder {
+            color: #6b7280;
+        }
+
+        .output-box {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            height: 500px;
+            overflow-y: auto;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #d1d5db;
+        }
+
+        .output-wrapper {
+            position: relative;
+        }
+
+        /* Button panel */
+        .button-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 140px;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(16, 185, 129, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .btn-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .btn-warning:hover {
+            background: rgba(245, 158, 11, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .btn-accent {
+            background: rgba(147, 51, 234, 0.1);
+            color: #a855f7;
+            border: 1px solid rgba(147, 51, 234, 0.2);
+        }
+
+        .btn-accent:hover {
+            background: rgba(147, 51, 234, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .btn-neutral {
+            background: rgba(255, 255, 255, 0.1);
+            color: #9ca3af;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-neutral:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
+
+        /* Status bar */
+        .status-bar {
+            margin-top: 12px;
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            font-size: 12px;
+            color: #9ca3af;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .status-bar.error {
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.2);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .status-bar.success {
+            color: #10b981;
+            border-color: rgba(16, 185, 129, 0.2);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        /* JSON syntax highlighting */
         .json-key {
-            color: #8e44ad;
+            color: #a855f7;
             font-weight: 600;
         }
 
-        .json-value {
-            color: #27ae60;
-        }
-
         .json-string {
-            color: #c0392b;
+            color: #10b981;
         }
 
         .json-number {
-            color: #2980b9;
+            color: #3b82f6;
         }
 
         .json-boolean {
-            color: #d35400;
+            color: #f59e0b;
             font-weight: 600;
         }
 
         .json-null {
-            color: #95a5a6;
+            color: #6b7280;
             font-style: italic;
         }
 
@@ -212,95 +390,140 @@
             margin: 0;
         }
 
-        .status-bar {
-            margin-top: 10px;
-            padding: 8px;
-            background: #ecf0f1;
+        /* Search highlighting */
+        .highlight {
+            background-color: rgba(245, 158, 11, 0.3) !important;
+            color: #f59e0b !important;
+            padding: 2px 4px;
             border-radius: 4px;
-            font-size: 12px;
-            color: #7f8c8d;
         }
 
-        .error {
-            color: #e74c3c !important;
+        .current-highlight {
+            background-color: rgba(239, 68, 68, 0.4) !important;
+            color: #ffffff !important;
         }
 
-        .success {
-            color: #27ae60 !important;
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .toolbar {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-            align-items: center;
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .editor-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .button-panel {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
         }
 
-        .toolbar button {
-            padding: 6px 12px;
-            font-size: 12px;
-            min-width: auto;
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 16px;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .editor-textarea,
+            .output-box {
+                height: 400px;
+            }
+
+            .button-panel {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .btn {
+                width: 100%;
+            }
         }
 
-        .line-numbers {
-            position: absolute;
-            left: 0;
-            top: 0;
-            background: #f8f9fa;
-            color: #6c757d;
-            padding: 12px 8px;
-            border-right: 1px solid #dee2e6;
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            font-size: 12px;
-            line-height: 1.5;
-            user-select: none;
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
         }
 
-        .output-wrapper {
-            position: relative;
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
         }
     </style>
 </head>
 <body>
-<div th:replace="~{fragments/header :: header}"></div>
+<div class="bg-pattern"></div>
 
-<h2>JSON Formatter & Validator</h2>
+<nav class="nav">
+    <div class="nav-container">
+        <a href="/home" class="nav-logo">GTL DevKit</a>
+        <a href="/home" class="nav-back">← Back to Home</a>
+    </div>
+</nav>
 
-<div class="editor-container">
-    <!-- Left editor -->
-    <div class="editor">
-        <label class="json-label">Input JSON</label>
-        <div class="search-container">
-            <input type="text" id="inputSearch" class="search-input" placeholder="Search in input JSON (Ctrl+F)">
-            <div id="inputSearchResults" class="search-results" style="display: none;"></div>
-        </div>
-        <textarea id="jsonInput" placeholder="Paste your JSON here..."></textarea>
-        <div class="status-bar">
-            <span id="inputStatus">Ready</span>
-        </div>
+<div class="container">
+    <div class="header">
+        <h1 class="page-title">JSON Formatter & Validator</h1>
+        <p class="page-subtitle">Format, validate, and search through JSON data</p>
+        <p class="page-description">
+            Beautify minified JSON, validate syntax, search through data, and analyze JSON structure
+        </p>
     </div>
 
-    <!-- Buttons -->
-    <div class="button-panel">
-        <button onclick="beautifyJson()">Format / Beautify</button>
-        <button onclick="minifyJson()" id="minifyBtn">Minify</button>
-        <button onclick="validateJson()" id="validateBtn">Validate</button>
-        <button onclick="copyOutput()" id="copyBtn">Copy Output</button>
-        <button onclick="resetJson()" id="resetBtn">Reset</button>
-    </div>
+    <div class="editor-container">
+        <!-- Left editor -->
+        <div class="editor">
+            <label class="editor-label">Input JSON</label>
+            <div class="search-container">
+                <input type="text" id="inputSearch" class="search-input" placeholder="Search in input JSON (Ctrl+F)">
+                <div id="inputSearchResults" class="search-results" style="display: none;"></div>
+            </div>
+            <textarea id="jsonInput" class="editor-textarea" placeholder="Paste your JSON here..."></textarea>
+            <div class="status-bar" id="inputStatus">Ready</div>
+        </div>
 
-    <!-- Right output -->
-    <div class="editor">
-        <label class="json-label">Formatted JSON / Error</label>
-        <div class="search-container">
-            <input type="text" id="outputSearch" class="search-input" placeholder="Search in output JSON (Ctrl+F)">
-            <div id="outputSearchResults" class="search-results" style="display: none;"></div>
+        <!-- Buttons -->
+        <div class="button-panel">
+            <button onclick="beautifyJson()" class="btn btn-primary">✨ Format</button>
+            <button onclick="minifyJson()" class="btn btn-warning">🗜️ Minify</button>
+            <button onclick="validateJson()" class="btn btn-secondary">✅ Validate</button>
+            <button onclick="copyOutput()" class="btn btn-accent">📋 Copy</button>
+            <button onclick="resetJson()" class="btn btn-neutral">🔄 Reset</button>
         </div>
-        <div class="output-wrapper">
-            <div id="jsonOutput" class="output-box"></div>
-        </div>
-        <div class="status-bar">
-            <span id="outputStatus">Ready</span>
+
+        <!-- Right output -->
+        <div class="editor">
+            <label class="editor-label">Formatted JSON / Results</label>
+            <div class="search-container">
+                <input type="text" id="outputSearch" class="search-input" placeholder="Search in output JSON (Ctrl+F)">
+                <div id="outputSearchResults" class="search-results" style="display: none;"></div>
+            </div>
+            <div class="output-wrapper">
+                <div id="jsonOutput" class="output-box"></div>
+            </div>
+            <div class="status-bar" id="outputStatus">Ready</div>
         </div>
     </div>
 </div>
@@ -358,14 +581,16 @@
             const parsed = JSON.parse(input);
             const info = analyzeJson(parsed);
             document.getElementById("jsonOutput").innerHTML = `
-                <div style="color: #27ae60; font-weight: bold;">✓ Valid JSON</div>
-                <div style="margin-top: 10px;">
-                    <div><strong>Type:</strong> ${info.type}</div>
-                    <div><strong>Size:</strong> ${info.size} characters</div>
-                    <div><strong>Keys:</strong> ${info.keys}</div>
-                    <div><strong>Depth:</strong> ${info.depth}</div>
-                </div>
-            `;
+                    <div style="color: #10b981; font-weight: bold; font-size: 1.1rem; margin-bottom: 16px;">
+                        ✅ Valid JSON
+                    </div>
+                    <div style="display: grid; gap: 8px; color: #d1d5db;">
+                        <div><strong style="color: #a855f7;">Type:</strong> ${info.type}</div>
+                        <div><strong style="color: #a855f7;">Size:</strong> ${info.size} characters</div>
+                        <div><strong style="color: #a855f7;">Keys:</strong> ${info.keys}</div>
+                        <div><strong style="color: #a855f7;">Depth:</strong> ${info.depth}</div>
+                    </div>
+                `;
             setOutputStatus("JSON is valid", "success");
         } catch (error) {
             displayError(error.message, input);
@@ -411,16 +636,18 @@
         const lineMatch = message.match(/line (\d+)/);
         const columnMatch = message.match(/column (\d+)/);
 
-        let errorHtml = `<div class="error">❌ JSON Parse Error</div>`;
-        errorHtml += `<div style="margin-top: 10px; color: #e74c3c;">${message}</div>`;
+        let errorHtml = `<div style="color: #ef4444; font-weight: bold; font-size: 1.1rem; margin-bottom: 16px;">
+                ❌ JSON Parse Error
+            </div>`;
+        errorHtml += `<div style="margin-bottom: 16px; color: #ef4444; background: rgba(239, 68, 68, 0.1); padding: 12px; border-radius: 8px; border-left: 4px solid #ef4444;">${message}</div>`;
 
         if (lineMatch) {
             const lineNum = parseInt(lineMatch[1]);
             const lines = input.split('\n');
             if (lines[lineNum - 1]) {
-                errorHtml += `<div style="margin-top: 15px;">`;
-                errorHtml += `<div><strong>Line ${lineNum}:</strong></div>`;
-                errorHtml += `<div style="background: #f8f9fa; padding: 10px; border-left: 3px solid #e74c3c; margin: 5px 0; font-family: monospace;">${escapeHtml(lines[lineNum - 1])}</div>`;
+                errorHtml += `<div style="margin-top: 16px;">`;
+                errorHtml += `<div style="color: #a855f7; font-weight: 600; margin-bottom: 8px;">Line ${lineNum}:</div>`;
+                errorHtml += `<div style="background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 8px; border-left: 3px solid #ef4444; font-family: monospace; color: #d1d5db;">${escapeHtml(lines[lineNum - 1])}</div>`;
                 errorHtml += `</div>`;
             }
         }
@@ -489,13 +716,13 @@
     function setInputStatus(message, type = "") {
         const status = document.getElementById("inputStatus");
         status.textContent = message;
-        status.className = type;
+        status.className = "status-bar " + type;
     }
 
     function setOutputStatus(message, type = "") {
         const status = document.getElementById("outputStatus");
         status.textContent = message;
-        status.className = type;
+        status.className = "status-bar " + type;
     }
 
     // Enhanced search functionality
@@ -524,16 +751,13 @@
 
     function highlightSearchResults(results, targetElement, isInput = false) {
         if (isInput) {
-            // For input textarea, we can't highlight, so we'll just navigate
             return;
         }
 
-        // For output, we need to re-highlight the JSON and add search highlights
         const output = document.getElementById("jsonOutput");
         let content = output.textContent || output.innerText;
 
         if (results.length === 0) {
-            // Re-display without search highlights
             if (content.trim() && content !== "Ready") {
                 try {
                     const parsed = JSON.parse(content);
@@ -546,7 +770,6 @@
             return;
         }
 
-        // Sort results by index in descending order for replacement
         results.sort((a, b) => b.index - a.index);
 
         let highlightedContent = content;
@@ -572,7 +795,6 @@
             targetElement.setSelectionRange(result.index, result.index + result.length);
             targetElement.scrollTop = Math.max(0, (result.index / targetElement.value.length) * targetElement.scrollHeight - targetElement.clientHeight / 2);
         } else {
-            // Scroll to the highlighted result
             const output = document.getElementById("jsonOutput");
             const highlightedElement = output.querySelector('.current-highlight');
             if (highlightedElement) {

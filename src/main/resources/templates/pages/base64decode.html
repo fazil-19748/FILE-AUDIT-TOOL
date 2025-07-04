@@ -14,7 +14,7 @@
     function downloadFile() {
         const base64Data = document.getElementById('base64Input').value;
         const host = window.location.hostname;
-        const port = window.location.port || 8084;
+        const port = window.location.port || 8094;
         const baseUrl = `http://${host}:${port}`;
 
         fetch(`${baseUrl}/api/files/decode`, {

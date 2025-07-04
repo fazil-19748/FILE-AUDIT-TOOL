@@ -44,10 +44,11 @@
             border-radius: 8px;
             border: 1px solid #ccd6dd;
             resize: vertical;
-            font-family: monospace;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
             font-size: 14px;
             width: 100%;
             box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+            line-height: 1.5;
         }
 
         .output-box {
@@ -57,13 +58,14 @@
             padding: 12px;
             height: 600px;
             overflow-y: auto;
-            overflow-x: hidden;
-            font-family: monospace;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
             font-size: 14px;
             text-align: left;
             display: block;
             word-wrap: break-word;
             white-space: pre-wrap;
+            line-height: 1.5;
         }
 
         .json-label {
@@ -71,6 +73,7 @@
             color: #34495e;
             margin-bottom: 5px;
             text-align: left;
+            font-weight: 600;
         }
 
         .button-panel {
@@ -85,16 +88,23 @@
             background-color: #3498db;
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border-radius: 6px;
             cursor: pointer;
             font-size: 14px;
-            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            min-width: 140px;
         }
 
         button:hover {
             background-color: #2e86de;
             box-shadow: 0 4px 12px rgba(46, 134, 222, 0.3);
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
         }
 
         button#resetBtn {
@@ -105,12 +115,94 @@
             background-color: #7f8c8d;
         }
 
+        button#minifyBtn {
+            background-color: #e67e22;
+        }
+
+        button#minifyBtn:hover {
+            background-color: #d35400;
+        }
+
+        button#validateBtn {
+            background-color: #27ae60;
+        }
+
+        button#validateBtn:hover {
+            background-color: #2ecc71;
+        }
+
+        button#copyBtn {
+            background-color: #9b59b6;
+        }
+
+        button#copyBtn:hover {
+            background-color: #8e44ad;
+        }
+
+        .search-container {
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ccd6dd;
+            border-radius: 4px;
+            font-size: 13px;
+            box-sizing: border-box;
+        }
+
+        .search-results {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(52, 73, 94, 0.8);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            pointer-events: none;
+        }
+
+        .highlight {
+            background-color: #f39c12 !important;
+            color: #2c3e50 !important;
+            padding: 1px 2px;
+            border-radius: 2px;
+        }
+
+        .current-highlight {
+            background-color: #e74c3c !important;
+            color: white !important;
+        }
+
         .json-key {
-            color: #000000;
+            color: #8e44ad;
+            font-weight: 600;
         }
 
         .json-value {
-            color: #006400;;
+            color: #27ae60;
+        }
+
+        .json-string {
+            color: #c0392b;
+        }
+
+        .json-number {
+            color: #2980b9;
+        }
+
+        .json-boolean {
+            color: #d35400;
+            font-weight: 600;
+        }
+
+        .json-null {
+            color: #95a5a6;
+            font-style: italic;
         }
 
         .pretty-json {
@@ -120,144 +212,493 @@
             margin: 0;
         }
 
-        .json-string::before,
-        .json-string::after {
-            content: '"';
+        .status-bar {
+            margin-top: 10px;
+            padding: 8px;
+            background: #ecf0f1;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #7f8c8d;
         }
 
+        .error {
+            color: #e74c3c !important;
+        }
 
+        .success {
+            color: #27ae60 !important;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .toolbar button {
+            padding: 6px 12px;
+            font-size: 12px;
+            min-width: auto;
+        }
+
+        .line-numbers {
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #f8f9fa;
+            color: #6c757d;
+            padding: 12px 8px;
+            border-right: 1px solid #dee2e6;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.5;
+            user-select: none;
+        }
+
+        .output-wrapper {
+            position: relative;
+        }
     </style>
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 
-<h2>JSON Formatter</h2>
+<h2>JSON Formatter & Validator</h2>
 
 <div class="editor-container">
     <!-- Left editor -->
     <div class="editor">
         <label class="json-label">Input JSON</label>
-        <textarea id="jsonInput" placeholder="Paste minified JSON here..."></textarea>
-
-        <!-- Search box for Input -->
-        <input type="text" id="inputSearch" placeholder="Search input..."
-               style="display:none; margin-bottom:10px; padding:6px; border:1px solid #ccc; border-radius:4px; font-size:13px;">
+        <div class="search-container">
+            <input type="text" id="inputSearch" class="search-input" placeholder="Search in input JSON (Ctrl+F)">
+            <div id="inputSearchResults" class="search-results" style="display: none;"></div>
+        </div>
+        <textarea id="jsonInput" placeholder="Paste your JSON here..."></textarea>
+        <div class="status-bar">
+            <span id="inputStatus">Ready</span>
+        </div>
     </div>
 
     <!-- Buttons -->
     <div class="button-panel">
         <button onclick="beautifyJson()">Format / Beautify</button>
+        <button onclick="minifyJson()" id="minifyBtn">Minify</button>
+        <button onclick="validateJson()" id="validateBtn">Validate</button>
+        <button onclick="copyOutput()" id="copyBtn">Copy Output</button>
         <button onclick="resetJson()" id="resetBtn">Reset</button>
     </div>
 
-    <!-- Right output (highlighted) -->
+    <!-- Right output -->
     <div class="editor">
         <label class="json-label">Formatted JSON / Error</label>
-        <div id="jsonOutput" class="output-box"></div>
-        <input type="text" id="outputSearch" placeholder="Search output..."
-               style="display:none; margin-bottom:10px; padding:6px; border:1px solid #ccc; border-radius:4px; font-size:13px;">
+        <div class="search-container">
+            <input type="text" id="outputSearch" class="search-input" placeholder="Search in output JSON (Ctrl+F)">
+            <div id="outputSearchResults" class="search-results" style="display: none;"></div>
+        </div>
+        <div class="output-wrapper">
+            <div id="jsonOutput" class="output-box"></div>
+        </div>
+        <div class="status-bar">
+            <span id="outputStatus">Ready</span>
+        </div>
     </div>
 </div>
 
 <script>
-    function beautifyJson() {
-        const input = document.getElementById("jsonInput").value;
-        const host = window.location.hostname;
-        const port = window.location.port || 8084;
-        const baseUrl = `http://${host}:${port}`;
-        const output = document.getElementById("jsonOutput");
-        output.innerText = "Formatting...";
+    let currentInputHighlights = [];
+    let currentOutputHighlights = [];
+    let currentInputIndex = -1;
+    let currentOutputIndex = -1;
 
-        fetch(`${baseUrl}/api/json/format`, {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: input
-        })
-            .then(response => response.text())
-            .then(text => {
-                if (text.startsWith("Parse error on line")) {
-                    output.style.color = "#e74c3c";
-                    output.textContent = text; // Show raw error
-                } else {
-                    output.style.color = "#2c3e50";
-                    output.innerHTML = `<pre class="pretty-json">${syntaxHighlight(text)}</pre>`;
-                }
-            })
-            .catch(err => {
-                output.style.color = "#e74c3c";
-                output.textContent = "Request failed: " + err.message;
-            });
+    function beautifyJson() {
+        const input = document.getElementById("jsonInput").value.trim();
+        if (!input) {
+            setOutputStatus("Please enter JSON to format", "error");
+            return;
+        }
+
+        try {
+            const parsed = JSON.parse(input);
+            const formatted = JSON.stringify(parsed, null, 2);
+            displayFormattedJson(formatted);
+            setOutputStatus("JSON formatted successfully", "success");
+        } catch (error) {
+            displayError(error.message, input);
+            setOutputStatus("Invalid JSON: " + error.message, "error");
+        }
     }
 
-    function syntaxHighlight(json) {
-        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        return json.replace(/("(.*?)")(\s*:\s*)?(\d+|true|false|null|".*?")?/g, function (match, key, rawKey, colon, value) {
-            let keySpan = `<span class="json-key">${key}</span>`;
-            if (!colon) return keySpan; // it's just a string in array
-            let valueSpan;
-            if (/^".*?"$/.test(value)) {
-                valueSpan = `<span class="json-value">${value}</span>`;
-            } else if (/true|false|null/.test(value)) {
-                valueSpan = `<span class="json-value">${value}</span>`;
-            } else {
-                valueSpan = `<span class="json-value">${value}</span>`;
-            }
-            return keySpan + colon + valueSpan;
+    function minifyJson() {
+        const input = document.getElementById("jsonInput").value.trim();
+        if (!input) {
+            setOutputStatus("Please enter JSON to minify", "error");
+            return;
+        }
+
+        try {
+            const parsed = JSON.parse(input);
+            const minified = JSON.stringify(parsed);
+            document.getElementById("jsonOutput").textContent = minified;
+            setOutputStatus("JSON minified successfully", "success");
+        } catch (error) {
+            displayError(error.message, input);
+            setOutputStatus("Invalid JSON: " + error.message, "error");
+        }
+    }
+
+    function validateJson() {
+        const input = document.getElementById("jsonInput").value.trim();
+        if (!input) {
+            setOutputStatus("Please enter JSON to validate", "error");
+            return;
+        }
+
+        try {
+            const parsed = JSON.parse(input);
+            const info = analyzeJson(parsed);
+            document.getElementById("jsonOutput").innerHTML = `
+                <div style="color: #27ae60; font-weight: bold;">✓ Valid JSON</div>
+                <div style="margin-top: 10px;">
+                    <div><strong>Type:</strong> ${info.type}</div>
+                    <div><strong>Size:</strong> ${info.size} characters</div>
+                    <div><strong>Keys:</strong> ${info.keys}</div>
+                    <div><strong>Depth:</strong> ${info.depth}</div>
+                </div>
+            `;
+            setOutputStatus("JSON is valid", "success");
+        } catch (error) {
+            displayError(error.message, input);
+            setOutputStatus("Invalid JSON: " + error.message, "error");
+        }
+    }
+
+    function copyOutput() {
+        const output = document.getElementById("jsonOutput");
+        const text = output.textContent || output.innerText;
+
+        navigator.clipboard.writeText(text).then(() => {
+            setOutputStatus("Copied to clipboard", "success");
+        }).catch(() => {
+            // Fallback for older browsers
+            const textarea = document.createElement("textarea");
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand("copy");
+            document.body.removeChild(textarea);
+            setOutputStatus("Copied to clipboard", "success");
         });
     }
 
     function resetJson() {
         document.getElementById("jsonInput").value = "";
-        document.getElementById("jsonOutput").innerText = "";
-        document.getElementById("jsonInput").addEventListener("paste", function (e) {
-            const inputArea = this;
+        document.getElementById("jsonOutput").innerHTML = "";
+        document.getElementById("inputSearch").value = "";
+        document.getElementById("outputSearch").value = "";
+        clearHighlights();
+        setInputStatus("Ready");
+        setOutputStatus("Ready");
+    }
 
-            // Give paste time to complete before formatting (use setTimeout)
-            setTimeout(() => {
-                beautifyJson();
-            }, 100); // slight delay ensures pasted content is available
+    function displayFormattedJson(json) {
+        const output = document.getElementById("jsonOutput");
+        output.innerHTML = `<pre class="pretty-json">${syntaxHighlight(json)}</pre>`;
+    }
+
+    function displayError(message, input) {
+        const output = document.getElementById("jsonOutput");
+        const lineMatch = message.match(/line (\d+)/);
+        const columnMatch = message.match(/column (\d+)/);
+
+        let errorHtml = `<div class="error">❌ JSON Parse Error</div>`;
+        errorHtml += `<div style="margin-top: 10px; color: #e74c3c;">${message}</div>`;
+
+        if (lineMatch) {
+            const lineNum = parseInt(lineMatch[1]);
+            const lines = input.split('\n');
+            if (lines[lineNum - 1]) {
+                errorHtml += `<div style="margin-top: 15px;">`;
+                errorHtml += `<div><strong>Line ${lineNum}:</strong></div>`;
+                errorHtml += `<div style="background: #f8f9fa; padding: 10px; border-left: 3px solid #e74c3c; margin: 5px 0; font-family: monospace;">${escapeHtml(lines[lineNum - 1])}</div>`;
+                errorHtml += `</div>`;
+            }
+        }
+
+        output.innerHTML = errorHtml;
+    }
+
+    function analyzeJson(obj) {
+        const type = Array.isArray(obj) ? 'Array' : typeof obj;
+        const size = JSON.stringify(obj).length;
+        const keys = countKeys(obj);
+        const depth = getDepth(obj);
+
+        return { type, size, keys, depth };
+    }
+
+    function countKeys(obj) {
+        if (typeof obj !== 'object' || obj === null) return 0;
+        let count = 0;
+
+        function traverse(item) {
+            if (typeof item === 'object' && item !== null) {
+                if (Array.isArray(item)) {
+                    item.forEach(traverse);
+                } else {
+                    count += Object.keys(item).length;
+                    Object.values(item).forEach(traverse);
+                }
+            }
+        }
+
+        traverse(obj);
+        return count;
+    }
+
+    function getDepth(obj) {
+        if (typeof obj !== 'object' || obj === null) return 0;
+        return 1 + Math.max(...Object.values(obj).map(getDepth), 0);
+    }
+
+    function syntaxHighlight(json) {
+        json = escapeHtml(json);
+        return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+            let cls = 'json-number';
+            if (/^"/.test(match)) {
+                if (/:$/.test(match)) {
+                    cls = 'json-key';
+                } else {
+                    cls = 'json-string';
+                }
+            } else if (/true|false/.test(match)) {
+                cls = 'json-boolean';
+            } else if (/null/.test(match)) {
+                cls = 'json-null';
+            }
+            return '<span class="' + cls + '">' + match + '</span>';
         });
     }
-</script>
 
-<script>
-    document.addEventListener("keydown", function (e) {
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function setInputStatus(message, type = "") {
+        const status = document.getElementById("inputStatus");
+        status.textContent = message;
+        status.className = type;
+    }
+
+    function setOutputStatus(message, type = "") {
+        const status = document.getElementById("outputStatus");
+        status.textContent = message;
+        status.className = type;
+    }
+
+    // Enhanced search functionality
+    function searchInText(searchTerm, targetElement, isInput = false) {
+        const text = isInput ? targetElement.value : (targetElement.textContent || targetElement.innerText);
+        const results = [];
+
+        if (!searchTerm) {
+            clearHighlights();
+            return results;
+        }
+
+        const regex = new RegExp(escapeRegExp(searchTerm), 'gi');
+        let match;
+
+        while ((match = regex.exec(text)) !== null) {
+            results.push({
+                index: match.index,
+                length: searchTerm.length,
+                text: match[0]
+            });
+        }
+
+        return results;
+    }
+
+    function highlightSearchResults(results, targetElement, isInput = false) {
+        if (isInput) {
+            // For input textarea, we can't highlight, so we'll just navigate
+            return;
+        }
+
+        // For output, we need to re-highlight the JSON and add search highlights
+        const output = document.getElementById("jsonOutput");
+        let content = output.textContent || output.innerText;
+
+        if (results.length === 0) {
+            // Re-display without search highlights
+            if (content.trim() && content !== "Ready") {
+                try {
+                    const parsed = JSON.parse(content);
+                    const formatted = JSON.stringify(parsed, null, 2);
+                    displayFormattedJson(formatted);
+                } catch (e) {
+                    // Keep as is if not valid JSON
+                }
+            }
+            return;
+        }
+
+        // Sort results by index in descending order for replacement
+        results.sort((a, b) => b.index - a.index);
+
+        let highlightedContent = content;
+        results.forEach((result, i) => {
+            const before = highlightedContent.substring(0, result.index);
+            const match = highlightedContent.substring(result.index, result.index + result.length);
+            const after = highlightedContent.substring(result.index + result.length);
+
+            const className = i === currentOutputIndex ? 'highlight current-highlight' : 'highlight';
+            highlightedContent = before + `<span class="${className}">${escapeHtml(match)}</span>` + after;
+        });
+
+        output.innerHTML = `<pre class="pretty-json">${highlightedContent}</pre>`;
+    }
+
+    function navigateToResult(results, targetElement, index, isInput = false) {
+        if (results.length === 0) return;
+
+        const result = results[index];
+
+        if (isInput) {
+            targetElement.focus();
+            targetElement.setSelectionRange(result.index, result.index + result.length);
+            targetElement.scrollTop = Math.max(0, (result.index / targetElement.value.length) * targetElement.scrollHeight - targetElement.clientHeight / 2);
+        } else {
+            // Scroll to the highlighted result
+            const output = document.getElementById("jsonOutput");
+            const highlightedElement = output.querySelector('.current-highlight');
+            if (highlightedElement) {
+                highlightedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }
+
+    function clearHighlights() {
+        currentInputHighlights = [];
+        currentOutputHighlights = [];
+        currentInputIndex = -1;
+        currentOutputIndex = -1;
+
+        document.getElementById("inputSearchResults").style.display = "none";
+        document.getElementById("outputSearchResults").style.display = "none";
+    }
+
+    function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function updateSearchResults(results, resultsElement, currentIndex) {
+        if (results.length === 0) {
+            resultsElement.style.display = "none";
+        } else {
+            resultsElement.style.display = "block";
+            resultsElement.textContent = `${currentIndex + 1}/${results.length}`;
+        }
+    }
+
+    // Event listeners
+    document.getElementById("inputSearch").addEventListener("input", function() {
+        const searchTerm = this.value;
+        const textarea = document.getElementById("jsonInput");
+
+        currentInputHighlights = searchInText(searchTerm, textarea, true);
+        currentInputIndex = currentInputHighlights.length > 0 ? 0 : -1;
+
+        updateSearchResults(currentInputHighlights, document.getElementById("inputSearchResults"), currentInputIndex);
+
+        if (currentInputIndex >= 0) {
+            navigateToResult(currentInputHighlights, textarea, currentInputIndex, true);
+        }
+    });
+
+    document.getElementById("outputSearch").addEventListener("input", function() {
+        const searchTerm = this.value;
+        const output = document.getElementById("jsonOutput");
+
+        currentOutputHighlights = searchInText(searchTerm, output, false);
+        currentOutputIndex = currentOutputHighlights.length > 0 ? 0 : -1;
+
+        updateSearchResults(currentOutputHighlights, document.getElementById("outputSearchResults"), currentOutputIndex);
+        highlightSearchResults(currentOutputHighlights, output, false);
+
+        if (currentOutputIndex >= 0) {
+            navigateToResult(currentOutputHighlights, output, currentOutputIndex, false);
+        }
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener("keydown", function(e) {
         if ((e.ctrlKey || e.metaKey) && e.key === "f") {
             e.preventDefault();
+            const activeElement = document.activeElement;
 
-            document.getElementById("inputSearch").style.display = "block";
-            document.getElementById("outputSearch").style.display = "block";
-            document.getElementById("inputSearch").focus();
+            if (activeElement === document.getElementById("jsonInput") ||
+                activeElement.closest('.editor') === document.getElementById("jsonInput").closest('.editor')) {
+                document.getElementById("inputSearch").focus();
+            } else {
+                document.getElementById("outputSearch").focus();
+            }
+        }
+
+        // Navigate search results with Enter and Shift+Enter
+        if (e.key === "Enter" && (document.activeElement === document.getElementById("inputSearch") ||
+            document.activeElement === document.getElementById("outputSearch"))) {
+            e.preventDefault();
+
+            if (document.activeElement === document.getElementById("inputSearch")) {
+                if (currentInputHighlights.length > 0) {
+                    if (e.shiftKey) {
+                        currentInputIndex = currentInputIndex <= 0 ? currentInputHighlights.length - 1 : currentInputIndex - 1;
+                    } else {
+                        currentInputIndex = currentInputIndex >= currentInputHighlights.length - 1 ? 0 : currentInputIndex + 1;
+                    }
+                    navigateToResult(currentInputHighlights, document.getElementById("jsonInput"), currentInputIndex, true);
+                    updateSearchResults(currentInputHighlights, document.getElementById("inputSearchResults"), currentInputIndex);
+                }
+            } else {
+                if (currentOutputHighlights.length > 0) {
+                    if (e.shiftKey) {
+                        currentOutputIndex = currentOutputIndex <= 0 ? currentOutputHighlights.length - 1 : currentOutputIndex - 1;
+                    } else {
+                        currentOutputIndex = currentOutputIndex >= currentOutputHighlights.length - 1 ? 0 : currentOutputIndex + 1;
+                    }
+                    highlightSearchResults(currentOutputHighlights, document.getElementById("jsonOutput"), false);
+                    navigateToResult(currentOutputHighlights, document.getElementById("jsonOutput"), currentOutputIndex, false);
+                    updateSearchResults(currentOutputHighlights, document.getElementById("outputSearchResults"), currentOutputIndex);
+                }
+            }
         }
     });
 
-    // Search input JSON textarea
-    document.getElementById("inputSearch").addEventListener("input", function () {
-        const term = this.value.toLowerCase();
-        const inputArea = document.getElementById("jsonInput");
-        const content = inputArea.value;
-        const index = content.toLowerCase().indexOf(term);
-
-        if (index !== -1) {
-            inputArea.focus();
-            inputArea.setSelectionRange(index, index + term.length);
-        }
+    // Auto-format on paste
+    document.getElementById("jsonInput").addEventListener("paste", function() {
+        setTimeout(() => {
+            const input = this.value.trim();
+            if (input) {
+                setInputStatus("JSON pasted, ready to format");
+                // Auto-format if it looks like minified JSON
+                if (input.length > 100 && (input.startsWith('{') || input.startsWith('['))) {
+                    setTimeout(beautifyJson, 200);
+                }
+            }
+        }, 100);
     });
 
-    // Search output JSON display
-    document.getElementById("outputSearch").addEventListener("input", function () {
-        const term = this.value.toLowerCase();
-        const outputDiv = document.getElementById("jsonOutput");
-        const text = outputDiv.textContent || outputDiv.innerText;
-        const index = text.toLowerCase().indexOf(term);
-
-        if (index !== -1) {
-            // Scroll to match
-            const beforeMatch = text.substring(0, index);
-            const linesBefore = beforeMatch.split('\n').length - 1;
-            outputDiv.scrollTop = linesBefore * 18; // roughly one line height
-
-            // Highlighting not added here to keep output clean
+    // Input change detection
+    document.getElementById("jsonInput").addEventListener("input", function() {
+        const input = this.value.trim();
+        if (input) {
+            setInputStatus(`${input.length} characters`);
+        } else {
+            setInputStatus("Ready");
         }
     });
 </script>

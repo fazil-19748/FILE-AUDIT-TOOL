@@ -3,38 +3,455 @@
 <head>
     <title>GTL Dev Toolkit</title>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="/css/style1.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Professional geometric background */
+        .bg-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            background:
+                    radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, rgba(147, 51, 234, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 40% 60%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
+            background-size: 100% 100%;
+        }
+
+        /* Subtle grid overlay */
+        .bg-pattern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        /* Floating orbs */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.4;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .orb:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.1), transparent);
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .orb:nth-child(2) {
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(147, 51, 234, 0.1), transparent);
+            top: 60%;
+            right: 10%;
+            animation-delay: 2s;
+        }
+
+        .orb:nth-child(3) {
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.08), transparent);
+            bottom: 20%;
+            left: 20%;
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) translateX(0px); }
+            25% { transform: translateY(-20px) translateX(10px); }
+            50% { transform: translateY(-10px) translateX(-10px); }
+            75% { transform: translateY(-30px) translateX(5px); }
+        }
+
+        /* Container */
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 80px 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Professional Header */
+        .header {
+            text-align: center;
+            margin-bottom: 80px;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .logo {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 16px;
+            letter-spacing: -0.025em;
+            position: relative;
+            display: inline-block;
+        }
+
+        .logo::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #9333ea);
+            border-radius: 2px;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: #9ca3af;
+            font-weight: 400;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .tagline {
+            font-size: 1.1rem;
+            color: #6b7280;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Card grid */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* Professional glass cards */
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 32px 24px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Card content */
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            display: block;
+            opacity: 0.9;
+        }
+
+        .card-title {
+            font-size: 1.375rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #ffffff;
+            letter-spacing: -0.01em;
+        }
+
+        .card-description {
+            font-size: 0.95rem;
+            color: #9ca3af;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .card-arrow {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            opacity: 0.7;
+        }
+
+        .card:hover .card-arrow {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(2px);
+            opacity: 1;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(24px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Floating action button */
+        .fab {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            width: 56px;
+            height: 56px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 2.5rem;
+            }
+
+            .subtitle {
+                font-size: 1.1rem;
+            }
+
+            .card-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .card {
+                padding: 24px 20px;
+            }
+        }
+
+        /* Staggered animations */
+        .card:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+        .card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .card:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+        .card:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        /* Featured card enhancement */
+        .card.featured {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .card.featured:hover {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        /* Status badge */
+        .status-badge {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #ffffff;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+        }
+
+        /* Smooth loading */
+        body {
+            opacity: 0;
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
 </head>
 <body>
+<!-- Professional background -->
+<div class="bg-pattern">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+</div>
 
 <div class="container">
-    <h1>GTL Developer Tools</h1>
-    <p class="subtitle">A suite of utilities for JSON, Base64, and File Type Detection</p>
+    <div class="header">
+        <h1 class="logo">GTL DevKit</h1>
+        <p class="subtitle">Developer Toolkit</p>
+        <p class="tagline">Professional utilities for JSON processing, Base64 encoding, and file type detection with modern interface design</p>
+    </div>
 
     <div class="card-grid">
-
         <a class="card" th:href="@{/image}">
-            <h3>🖼️ File-Type Detection</h3>
-            <p>Upload and detect the actual file Type.</p>
+            <span class="card-icon">🔍</span>
+            <h3 class="card-title">File Type Detection</h3>
+            <p class="card-description">Upload any file and instantly discover its true format with advanced detection algorithms.</p>
+            <div class="card-arrow">→</div>
         </a>
 
         <a class="card" th:href="@{/base64upload}">
-            <h3>📤 File to Base64</h3>
-            <p>Convert uploaded file to base64 string.</p>
+            <span class="card-icon">📤</span>
+            <h3 class="card-title">File to Base64</h3>
+            <p class="card-description">Convert any file to Base64 encoding for web integration and data transfer.</p>
+            <div class="card-arrow">→</div>
         </a>
 
         <a class="card" th:href="@{/base64decode}">
-            <h3>📥 Base64 to File</h3>
-            <p>Decode base64 and download as file.</p>
+            <span class="card-icon">📥</span>
+            <h3 class="card-title">Base64 to File</h3>
+            <p class="card-description">Decode Base64 strings back to original files with instant download capability.</p>
+            <div class="card-arrow">→</div>
         </a>
 
-        <a class="card" th:href="@{/json-formatter}">
-            <h3>🧩 JSON Formatter</h3>
-            <p>Beautify and validate your raw JSON data.</p>
+        <a class="card featured" th:href="@{/json-formatter}">
+            <span class="status-badge">New</span>
+            <span class="card-icon">✨</span>
+            <h3 class="card-title">JSON Formatter</h3>
+            <p class="card-description">Professional JSON beautification, validation, and manipulation with advanced search capabilities.</p>
+            <div class="card-arrow">→</div>
         </a>
-
     </div>
 </div>
 
+<!-- Floating action button -->
+<a href="#" class="fab" title="Back to top">↑</a>
+
+<script>
+    // Smooth scroll for FAB
+    document.querySelector('.fab').addEventListener('click', function(e) {
+        e.preventDefault();
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+
+    // Enhanced card interactions
+    document.querySelectorAll('.card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-4px)';
+        });
+
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+
+    // Subtle parallax effect
+    let ticking = false;
+
+    function updateParallax() {
+        const scrolled = window.pageYOffset;
+        const rate = scrolled * -0.05;
+
+        document.querySelector('.bg-pattern').style.transform = `translateY(${rate}px)`;
+        ticking = false;
+    }
+
+    function requestTick() {
+        if (!ticking) {
+            requestAnimationFrame(updateParallax);
+            ticking = true;
+        }
+    }
+
+    window.addEventListener('scroll', requestTick);
+</script>
 </body>
 </html>

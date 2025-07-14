@@ -33,6 +33,11 @@
             to { transform: translateY(0); opacity: 1; }
         }
 
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         .bg-pattern {
             position: fixed;
             top: 0;
@@ -196,6 +201,33 @@
             color: white;
         }
 
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        .loading-text {
+            color: #d1d5db;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
         .status-bar {
             padding: 10px 16px;
             background: rgba(16, 185, 129, 0.1);
@@ -254,7 +286,12 @@
         <input type="number" id="targetSize" class="search-input" placeholder="Target Size (KB)" required />
 
         <div class="button-panel">
-            <button type="submit" class="btn btn-primary">Compress & Preview</button>
+            <button type="submit" class="btn btn-primary" id="compressBtn">Compress & Preview</button>
+        </div>
+
+        <div id="loadingSpinner" class="loading-spinner">
+            <div class="spinner"></div>
+            <div class="loading-text">Compressing your PDF...</div>
         </div>
 
         <div id="statusBar" class="status-bar"></div>
@@ -278,15 +315,29 @@
     const pdfPreview = document.getElementById('pdfPreview');
     const downloadLink = document.getElementById('downloadLink');
     const dropArea = document.getElementById('fileInputWrapper');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const compressBtn = document.getElementById('compressBtn');
 
     const host = window.location.hostname;
     const port = window.location.port || 8094;
     const baseUrl = `http://${host}:${port}`;
 
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
+    function showLoading() {
+        loadingSpinner.style.display = 'block';
+        compressBtn.disabled = true;
+        compressBtn.textContent = 'Compressing...';
         statusBar.style.display = 'none';
         previewSection.style.display = 'none';
+    }
+
+    function hideLoading() {
+        loadingSpinner.style.display = 'none';
+        compressBtn.disabled = false;
+        compressBtn.textContent = 'Compress & Preview';
+    }
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
         const file = fileInput.files[0];
         const targetSize = targetInput.value.trim();
@@ -300,6 +351,8 @@
             showError("Please enter a target size.");
             return;
         }
+
+        showLoading();
 
         const formData = new FormData();
         formData.append('file', file);
@@ -351,6 +404,8 @@
 
         } catch (err) {
             showError(err.message);
+        } finally {
+            hideLoading();
         }
     });
 

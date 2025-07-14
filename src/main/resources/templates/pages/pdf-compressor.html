@@ -82,6 +82,10 @@
             text-decoration: none;
         }
 
+        .nav-back:hover {
+            color: #ffffff;
+        }
+
         .container {
             z-index: 2;
             width: 100%;
@@ -117,16 +121,26 @@
             position: relative;
             display: inline-block;
             width: 100%;
-            max-width: 400px;
-            border: 2px dashed rgba(255, 255, 255, 0.5);
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.05);
+            max-width: 1000px;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.03);
             cursor: pointer;
-            transition: background 0.3s ease;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
         }
 
         .file-input-wrapper:hover {
+            background: rgba(59, 130, 246, 0.08);
+            border-color: rgba(59, 130, 246, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.15);
+        }
+
+        .file-input-wrapper.dragover {
             background: rgba(59, 130, 246, 0.1);
+            border-color: #3b82f6;
+            transform: scale(1.02);
         }
 
         input[type="file"] {
@@ -134,42 +148,73 @@
         }
 
         .file-input-display {
-            padding: 20px;
+            padding: 32px 70px;
             text-align: center;
             color: #d1d5db;
         }
 
         .file-input-icon {
-            font-size: 2rem;
-            margin-bottom: 10px;
+            font-size: 3rem;
+            margin-bottom: 16px;
+            opacity: 0.8;
         }
 
         .file-input-text {
-            font-size: 1rem;
-            margin-bottom: 5px;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            font-weight: 500;
         }
 
         .file-input-subtext {
             font-size: 0.9rem;
-            color: #6b7280;
+            color: #9ca3af;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+            margin: 32px 0;
+        }
+
+        .target-size-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-label {
+            font-size: 0.9rem;
+            color: #9ca3af;
+            font-weight: 500;
         }
 
         .search-input {
-            width: 150px;
-            padding: 10px 16px;
+            width: 200px;
+            padding: 14px 20px;
             background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            color: #d1d5db;
-            font-size: 14px;
-            margin: 20px auto;
-            display: block;
-            transition: border 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 16px;
+            text-align: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
         }
 
         .search-input:focus {
             border-color: #3b82f6;
             outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .search-input::placeholder {
+            color: #6b7280;
+            opacity: 1;
         }
 
         .button-panel {
@@ -261,7 +306,7 @@
 <nav class="nav">
     <div class="nav-container">
         <a href="/home" class="nav-logo">PDF Compressor</a>
-        <a href="/home" class="nav-back">← Back</a>
+        <a href="/home" class="nav-back">← Back to Home</a>
     </div>
 </nav>
 
@@ -272,18 +317,23 @@
     </header>
 
     <form id="compressForm">
-        <div class="form-group">
-            <div class="file-input-wrapper" id="fileInputWrapper">
-                <input type="file" id="fileInput" name="file" accept="application/pdf" required>
-                <div class="file-input-display" id="fileDisplay">
-                    <div class="file-input-icon">📁</div>
-                    <div class="file-input-text" id="fileNameText">Click to select a file</div>
-                    <div class="file-input-subtext">or drag and drop here</div>
+        <div class="input-group">
+            <div class="form-group">
+                <div class="file-input-wrapper" id="fileInputWrapper">
+                    <input type="file" id="fileInput" name="file" accept="application/pdf" required>
+                    <div class="file-input-display" id="fileDisplay">
+                        <div class="file-input-icon">📄</div>
+                        <div class="file-input-text" id="fileNameText">Click to select a PDF file</div>
+                        <div class="file-input-subtext">or drag and drop here</div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <input type="number" id="targetSize" class="search-input" placeholder="Target Size (KB)" required />
+            <div class="target-size-wrapper">
+                <label class="input-label" for="targetSize">Target Size</label>
+                <input type="number" id="targetSize" class="search-input" placeholder="Enter size in KB" required />
+            </div>
+        </div>
 
         <div class="button-panel">
             <button type="submit" class="btn btn-primary" id="compressBtn">Compress & Preview</button>
@@ -420,11 +470,14 @@
     });
 
     dropArea.addEventListener('click', () => fileInput.click());
-    dropArea.addEventListener('dragover', e => { e.preventDefault(); dropArea.classList.add('hover'); });
-    dropArea.addEventListener('dragleave', () => dropArea.classList.remove('hover'));
+    dropArea.addEventListener('dragover', e => {
+        e.preventDefault();
+        dropArea.classList.add('dragover');
+    });
+    dropArea.addEventListener('dragleave', () => dropArea.classList.remove('dragover'));
     dropArea.addEventListener('drop', e => {
         e.preventDefault();
-        dropArea.classList.remove('hover');
+        dropArea.classList.remove('dragover');
         const files = e.dataTransfer.files;
         if (files.length > 0) {
             fileInput.files = files;

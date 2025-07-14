@@ -31,5 +31,10 @@ public class ViewController {
         return "pages/json-formatter";
     }
 
+    @GetMapping("/compress-pdf")
+    public String pdfCompressor() {
+        return "pages/pdf-compressor";
+    }
+
 }
 

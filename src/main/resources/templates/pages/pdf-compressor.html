@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>PDF Compressor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            min-height: 100vh;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            opacity: 0;
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .bg-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            background:
+                    radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, rgba(147, 51, 234, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 40% 60%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
+        }
+
+        .nav {
+            position: relative;
+            z-index: 3;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            width: 100%;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-decoration: none;
+        }
+
+        .container {
+            z-index: 2;
+            width: 100%;
+            max-width: 80%;
+            padding: 40px 20px;
+            margin: auto;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 12px;
+        }
+
+        .page-description {
+            font-size: 1rem;
+            color: #ccc;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            max-width: 400px;
+            border: 2px dashed rgba(255, 255, 255, 0.5);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .file-input-wrapper:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-input-display {
+            padding: 20px;
+            text-align: center;
+            color: #d1d5db;
+        }
+
+        .file-input-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .file-input-text {
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+
+        .file-input-subtext {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+
+        .search-input {
+            width: 160px;
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #d1d5db;
+            font-size: 14px;
+            margin: 20px auto;
+            display: block;
+            transition: border 0.3s ease;
+        }
+
+        .search-input:focus {
+            border-color: #3b82f6;
+            outline: none;
+        }
+
+        .button-panel {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 140px;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+        }
+
+        .status-bar {
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            font-size: 13px;
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        #previewSection {
+            width: 100%;
+            max-width: 100%;
+            margin-top: 20px;
+            padding: 0 20px;
+        }
+
+        .nav-back {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #9ca3af;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+        }
+
+        .nav-back:hover {
+            color: #ffffff;
+        }
+
+        iframe {
+            width: 100%;          /* Take full width of parent */
+            height: 600px;        /* Adjust height as you like */
+            border: 1px solid #333;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body>
+<div class="bg-pattern"></div>
+
+<nav class="nav">
+    <div class="nav-container">
+        <a href="/home" class="nav-logo">PDF Compressor</a>
+        <a href="/home" class="nav-back">← Back</a>
+    </div>
+</nav>
+
+<div class="container">
+    <header class="header">
+        <h1 class="page-title">Compress PDF</h1>
+        <p class="page-description">Upload a PDF and get a compressed version ready to preview or download.</p>
+    </header>
+
+    <form id="compressForm">
+        <div class="form-group">
+            <div class="file-input-wrapper" id="fileInputWrapper">
+                <input type="file" id="fileInput" name="file" accept="application/pdf" required>
+                <div class="file-input-display" id="fileDisplay">
+                    <div class="file-input-icon">📁</div>
+                    <div class="file-input-text" id="fileNameText">Click to select a file</div>
+                    <div class="file-input-subtext">or drag and drop here</div>
+                </div>
+            </div>
+        </div>
+
+        <input type="number" id="targetSize" class="search-input" placeholder="Target Size (KB)" required />
+
+        <div class="button-panel">
+            <button type="submit" class="btn btn-primary">Compress & Preview</button>
+        </div>
+
+        <div id="statusBar" class="status-bar" style="display:none;"></div>
+
+        <div id="previewSection" style="display:none;">
+            <iframe id="pdfPreview"></iframe>
+            <div class="button-panel">
+                <a id="downloadLink" class="btn btn-primary" download="compressed.pdf" target="_blank">Download PDF</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    const form = document.getElementById('compressForm');
+    const fileInput = document.getElementById('fileInput');
+    const fileNameText = document.getElementById('fileNameText');
+    const targetInput = document.getElementById('targetSize');
+    const statusBar = document.getElementById('statusBar');
+    const previewSection = document.getElementById('previewSection');
+    const pdfPreview = document.getElementById('pdfPreview');
+    const downloadLink = document.getElementById('downloadLink');
+    const dropArea = document.getElementById('fileInputWrapper');
+
+    const host = window.location.hostname;
+    const port = window.location.port || 8094;
+    const baseUrl = `http://${host}:${port}`;
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        statusBar.style.display = 'none';
+        previewSection.style.display = 'none';
+
+        const file = fileInput.files[0];
+        const targetSize = targetInput.value.trim();
+
+        if (!file) {
+            statusBar.textContent = "❌ Please upload a PDF file.";
+            statusBar.style.display = 'block';
+            return;
+        }
+
+        if (!targetSize) {
+            statusBar.textContent = "❌ Please enter a target size.";
+            statusBar.style.display = 'block';
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const base64Resp = await fetch(`${baseUrl}/api/files/to-base64`, {
+                method: 'POST',
+                body: formData
+            });
+            const base64Data = await base64Resp.text();
+
+            const compressResp = await fetch(`${baseUrl}/api/pdf/compress`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    base64Pdf: base64Data,
+                    targetSizeKB: parseInt(targetSize)
+                })
+            });
+
+            const compressJson = await compressResp.json();
+            if (!compressJson.compressedImage || compressJson.errorCode !== "0") {
+                throw new Error(compressJson.errorMsg || "Compression failed.");
+            }
+
+            const decodeResp = await fetch(`${baseUrl}/api/files/decode`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: compressJson.compressedImage
+            });
+
+            const blob = await decodeResp.blob();
+            const blobUrl = URL.createObjectURL(blob);
+
+            pdfPreview.src = blobUrl;
+            downloadLink.href = blobUrl;
+            previewSection.style.display = 'block';
+
+        } catch (err) {
+            statusBar.textContent = "❌ " + err.message;
+            statusBar.style.display = 'block';
+        }
+    });
+
+    fileInput.addEventListener('change', () => {
+        fileNameText.textContent = fileInput.files[0] ? fileInput.files[0].name : 'Click to select a file';
+    });
+
+    dropArea.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    dropArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropArea.classList.add('hover');
+    });
+
+    dropArea.addEventListener('dragleave', () => {
+        dropArea.classList.remove('hover');
+    });
+
+    dropArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropArea.classList.remove('hover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            fileNameText.textContent = files[0].name;
+        }
+    });
+</script>
+</body>
+</html>

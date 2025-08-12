@@ -1,6 +1,10 @@
-# Use Java 21 base image
-FROM eclipse-temurin:21-jdk-jammy
-
+FROM alpine:3.21.3
+RUN apk update
+RUN apk add openjdk21
+RUN apk add tzdata
+RUN apk add ghostscript
+RUN rm -rf /var/cache/apk/*
+ENV TZ=Asia/Kolkata
 # Set working directory
 WORKDIR /app
 

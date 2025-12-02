@@ -544,9 +544,9 @@
         resultContainer.classList.remove('show');
         submitBtn.disabled = true;
 
+        const protocol = window.location.protocol;
         const host = window.location.hostname;
-        const port = window.location.port || 8094;
-        const baseUrl = `http://${host}:${port}`;
+        const baseUrl = `${protocol}//${host}`;
         const formData = new FormData();
         formData.append("file", fileInput.files[0]);
 

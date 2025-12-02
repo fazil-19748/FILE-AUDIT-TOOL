@@ -357,7 +357,7 @@
         }
 
         /* Animations */
-        @keyframes fadeInUp {
+        @keyframes fadeIn {
             from {
                 opacity: 0;
                 transform: translateY(20px);
@@ -556,17 +556,18 @@
         showLoading();
         hideStatus();
 
+        const protocol = window.location.protocol;
         const host = window.location.hostname;
         const port = window.location.port || 8094;
-        const baseUrl = `http://${host}:${port}`;
+        const baseUrl = `${protocol}//${host}:${port}`;
 
         try {
             const response = await fetch(`${baseUrl}/api/files/decode`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'text/plain'
+                    'Content-Type': 'application/json'
                 },
-                body: base64Data
+                body: JSON.stringify({ base64Input: base64Data })
             });
 
             if (!response.ok) {

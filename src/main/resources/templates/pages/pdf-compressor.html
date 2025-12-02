@@ -368,9 +368,10 @@
     const loadingSpinner = document.getElementById('loadingSpinner');
     const compressBtn = document.getElementById('compressBtn');
 
+    const protocol = window.location.protocol;
     const host = window.location.hostname;
     const port = window.location.port || 8094;
-    const baseUrl = `http://${host}:${port}`;
+    const baseUrl = `${protocol}//${host}:${port}`;
 
     function showLoading() {
         loadingSpinner.style.display = 'block';
@@ -430,8 +431,8 @@
 
             const decodeResp = await fetch(`${baseUrl}/api/files/decode`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'text/plain' },
-                body: compressJson.compressedImage
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ base64Input: compressJson.compressedImage })
             });
 
             const blob = await decodeResp.blob();

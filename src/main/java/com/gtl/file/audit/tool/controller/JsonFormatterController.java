@@ -4,11 +4,13 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/json")
 public class JsonFormatterController {
@@ -17,15 +19,18 @@ public class JsonFormatterController {
 
     @PostMapping("/format")
     public ResponseEntity<String> formatJson(@RequestBody String jsonInput) {
+        log.info("Received formatJson request. Input length: {}", jsonInput != null ? jsonInput.length() : 0);
         try {
             // Prevent partial parsing — ensures all-or-nothing
             JsonNode jsonNode = objectMapper.readTree(jsonInput);
             String prettyJson = objectMapper.writeValueAsString(jsonNode);
+            log.info("JSON formatted successfully. Output length: {}", prettyJson.length());
             return ResponseEntity.ok(prettyJson);
 
         } catch (JsonParseException e) {
             int line = e.getLocation().getLineNr();
             int column = e.getLocation().getColumnNr();
+            log.warn("JSON parse error at line {}, column {}: {}", line, column, e.getOriginalMessage());
 
             String[] lines = jsonInput.split("\n");
             String fullLine = (line <= lines.length) ? lines[line - 1] : "";
@@ -53,6 +58,7 @@ public class JsonFormatterController {
 
             return ResponseEntity.badRequest().body(message);
         } catch (IOException e) {
+            log.error("Unexpected error during JSON formatting: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().body("Unexpected error: " + e.getMessage());
         }
     }
@@ -76,5 +82,3 @@ public class JsonFormatterController {
         return "?";
     }
 }
-
-

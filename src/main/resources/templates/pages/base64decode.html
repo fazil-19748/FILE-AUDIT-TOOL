@@ -558,8 +558,7 @@
 
         const protocol = window.location.protocol;
         const host = window.location.hostname;
-        const port = window.location.port || 8094;
-        const baseUrl = `${protocol}//${host}:${port}`;
+        const baseUrl = `${protocol}//${host}`;
 
         try {
             const response = await fetch(`${baseUrl}/api/files/decode`, {
